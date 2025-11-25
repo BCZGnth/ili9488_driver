@@ -164,44 +164,121 @@ void ILI9488_Initialize(ili9488_interface_t interface)
     // Issue chip select (target device)
     // reset chip select (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
-    
-    // Normal display mode ON (13h)
-    ILI9488_SendCommand(interface, ILI9488_NORMAL_DISPLAY_MODE_ON);
 
-    // IDLE Mode OM (39h) (only allows 8-colors to be displayed instead of the 262,144 when not idle)
-    ILI9488_SendCommand(interface, ILI9488_IDLE_MODE_ON);
+    // Positive and negative gamma control taken from: https://github.com/jaretburkett/ILI9488/blob/master/ILI9488.cpp
+    ILI9488_SendCommand(interface, ILI9488_POSITIVE_GAMMA_CONTROL);
+    ILI9488_SendByte(interface, 0x00);
+    ILI9488_SendByte(interface, 0x03);
+    ILI9488_SendByte(interface, 0x09);
+    ILI9488_SendByte(interface, 0x08);
+    ILI9488_SendByte(interface, 0x16);
+    ILI9488_SendByte(interface, 0x0A);
+    ILI9488_SendByte(interface, 0x3F);
+    ILI9488_SendByte(interface, 0x78);
+    ILI9488_SendByte(interface, 0x4C);
+    ILI9488_SendByte(interface, 0x09);
+    ILI9488_SendByte(interface, 0x0A);
+    ILI9488_SendByte(interface, 0x08);
+    ILI9488_SendByte(interface, 0x16);
+    ILI9488_SendByte(interface, 0x1A);
+    ILI9488_SendByte(interface, 0x0F);
 
-    // Display Inversion Off
-    ILI9488_SendCommand(interface, ILI9488_DISPLAY_INVERSION_OFF);
-    
-    // Interface Pixel Format (3Ah) = 0x01 (8bit)
-    ILI9488_SendCommand(interface, ILI9488_INTERFACE_PIXEL_FORMAT);
-    ILI9488_SendByte(interface, 0x66);
-    
-    // Memory Access Control (36h) : 0x48
-    // 0x88 (MY=1, MX=0, MV=0) → Bottom-left origin, landscape orientation
-    ILI9488_SendCommand(interface, ILI9488_MEMORY_ACCESS_CONTROL);
-    ILI9488_SendByte(interface, 0x88);
-    
-    // Frame Rate Control (B2h)
-    ILI9488_SendCommand(interface, ILI9488_FRAME_RATE_CONTROL_IDLE);
-    ILI9488_SendByte(interface, 0x00);  // Recommended value (depends on datasheet)
+
+    ILI9488_SendCommand(interface, ILI9488_NEGATIVE_GAMMA_CONTROL);
+    ILI9488_SendByte(interface, 0x00);
+    ILI9488_SendByte(interface, 0x16);
+    ILI9488_SendByte(interface, 0x19);
+    ILI9488_SendByte(interface, 0x03);
+    ILI9488_SendByte(interface, 0x0F);
+    ILI9488_SendByte(interface, 0x05);
+    ILI9488_SendByte(interface, 0x32);
+    ILI9488_SendByte(interface, 0x45);
+    ILI9488_SendByte(interface, 0x46);
+    ILI9488_SendByte(interface, 0x04);
+    ILI9488_SendByte(interface, 0x0E);
+    ILI9488_SendByte(interface, 0x0D);
+    ILI9488_SendByte(interface, 0x35);
+    ILI9488_SendByte(interface, 0x37);
+    ILI9488_SendByte(interface, 0x0F);
+
+    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_1);      //Power Control 1
+    ILI9488_SendByte(interface, 0x17);    //Vreg1out
+    ILI9488_SendByte(interface, 0x15);    //Verg2out
+
+    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_2);      //Power Control 2
+    ILI9488_SendByte(interface, 0x41);    //VGH,VGL
+
+    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_3);      //Power Control 3
+    ILI9488_SendByte(interface, 0x00);
+    ILI9488_SendByte(interface, 0x12);    //Vcom
     ILI9488_SendByte(interface, 0x80);
 
-    // Display Function Control (B6h)
-    ILI9488_SendCommand(interface, ILI9488_DISPLAY_FUNCTION_CONTROL);
-    ILI9488_SendByte(interface, 0x0A);
-    ILI9488_SendByte(interface, 0x82);
+    ILI9488_SendCommand(interface, ILI9488_MEMORY_ACCESS_CONTROL);      //Memory Access
+    ILI9488_SendByte(interface, 0x48);
 
-    ILI9488_SendCommand(interface, ILI9488_WRITE_DISPLAY_BRIGHTNESS);
-    ILI9488_SendByte(interface, 0xFF); // Maximum brightness
-        
-    // Display ON (29h)
-    ILI9488_SendCommand(interface, ILI9488_DISPLAY_ON);
+    ILI9488_SendCommand(interface, 0x3A);      // Interface Pixel Format
+    ILI9488_SendByte(interface, 0x66); 	  //18 bit
+
+    ILI9488_SendCommand(interface, 0XB0);      // Interface Mode Control
+    ILI9488_SendByte(interface, 0x80);     			 //SDO NOT USE
+
+    ILI9488_SendCommand(interface, 0xB1);      //Frame rate
+    ILI9488_SendByte(interface, 0xA0);    //60Hz
+
+    ILI9488_SendCommand(interface, 0xB4);      //Display Inversion Control
+    ILI9488_SendByte(interface, 0x02);    //2-dot
+
+    ILI9488_SendCommand(interface, 0XB6);      //Display Function Control  RGB/MCU Interface Control
+
+    ILI9488_SendByte(interface, 0x02);    //MCU
+    ILI9488_SendByte(interface, 0x02);    //Source,Gate scan dieection
+
+    ILI9488_SendCommand(interface, 0XE9);      // Set Image Functio
+    ILI9488_SendByte(interface, 0x00);    // Disable 24 bit data
+
+    ILI9488_SendCommand(interface, 0xF7);      // Adjust Control
+    ILI9488_SendByte(interface, 0xA9);
+    ILI9488_SendByte(interface, 0x51);
+    ILI9488_SendByte(interface, 0x2C);
+    ILI9488_SendByte(interface, 0x82);    // D7 stream, loose
+    
+    // // Normal display mode ON (13h)
+    // ILI9488_SendCommand(interface, ILI9488_NORMAL_DISPLAY_MODE_ON);
+
+    // // IDLE Mode OM (39h) (only allows 8-colors to be displayed instead of the 262,144 when not idle)
+    // ILI9488_SendCommand(interface, ILI9488_IDLE_MODE_ON);
+
+    // // Display Inversion Off
+    // ILI9488_SendCommand(interface, ILI9488_DISPLAY_INVERSION_OFF);
+    
+    // // Interface Pixel Format (3Ah) = 0x01 (8bit)
+    // ILI9488_SendCommand(interface, ILI9488_INTERFACE_PIXEL_FORMAT);
+    // ILI9488_SendByte(interface, 0x66);
+    
+    // // Memory Access Control (36h) : 0x48
+    // // 0x88 (MY=1, MX=0, MV=0) → Bottom-left origin, landscape orientation
+    // ILI9488_SendCommand(interface, ILI9488_MEMORY_ACCESS_CONTROL);
+    // ILI9488_SendByte(interface, 0x88);
+    
+    // // Frame Rate Control (B2h)
+    // ILI9488_SendCommand(interface, ILI9488_FRAME_RATE_CONTROL_IDLE);
+    // ILI9488_SendByte(interface, 0x00);  // Recommended value (depends on datasheet)
+    // ILI9488_SendByte(interface, 0x80);
+
+    // // Display Function Control (B6h)
+    // ILI9488_SendCommand(interface, ILI9488_DISPLAY_FUNCTION_CONTROL);
+    // ILI9488_SendByte(interface, 0x0A);
+    // ILI9488_SendByte(interface, 0x82);
+
+    // ILI9488_SendCommand(interface, ILI9488_WRITE_DISPLAY_BRIGHTNESS);
+    // ILI9488_SendByte(interface, 0xFF); // Maximum brightness
 
     // Sleep OUT (11h)
     ILI9488_SendCommand(interface, ILI9488_SLEEP_OUT);
 
+    // Display ON (29h)
+    ILI9488_SendCommand(interface, ILI9488_DISPLAY_ON);
+    
     __delay_ms(5);
     
     // Issue chip select (target device)
