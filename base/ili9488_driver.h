@@ -45,7 +45,7 @@ typedef struct ILI9488_INTERFACE {
 void ILI9488_Reset(ili9488_interface_t interface);
 
 // Send command to ILI9488 (received value is ignored)
-void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char data);
+void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char cmd, uint8_t* pdata, size_t data_length);
 
 // Send data to ILI9488 (received value is ignored)
 void ILI9488_SendData(ili9488_interface_t interface, uint8_t * data, size_t len);

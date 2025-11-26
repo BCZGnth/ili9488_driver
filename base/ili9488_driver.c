@@ -41,7 +41,7 @@ void ILI9488_Reset(ili9488_interface_t interface)
 // Arguments      : data -> Command to send (1 byte)
 // Return         : None
 // Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
-void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char data)
+void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char cmd, uint8_t* pdata, size_t data_length)
 {
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
@@ -53,13 +53,22 @@ void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char data)
     // SendDataProc(data);
     
     // Ignore reception with void cast
-    (void)SoftSPI_Transfer(data, SOFT_SPI_MSB_FIRST);
-  
+    (void)SoftSPI_Transfer(cmd, SOFT_SPI_MSB_FIRST);
+
+    // Set the dc pin high again for the data portion of the transmit
+    __delay_us(1);
+    *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
+    __delay_us(1);
+
+    // Send the command data
+    for(int i = 0; i < data_length; i++) {
+        (void)SoftSPI_Transfer(*(pdata + i), SOFT_SPI_MSB_FIRST);
+    }
     // DMA sending process (use if necessary)
     //DMA_SPI1_Send_Byte_Proc(data);
 
     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) |= ~(1 << interface.spi_cs_pin);
+    *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
 }
 
 /* Function name   : ILI9488_SendData
@@ -100,7 +109,7 @@ void ILI9488_SendData(ili9488_interface_t interface, uint8_t* data, size_t len)
 void ILI9488_SendByte(ili9488_interface_t interface, uint8_t data)
 {
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
+    // *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
 
     // Set data mode (DC pin is command when LOW and data when HIGH)
     *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
@@ -109,7 +118,7 @@ void ILI9488_SendByte(ili9488_interface_t interface, uint8_t data)
     (void)SoftSPI_Transfer(data, SOFT_SPI_MSB_FIRST);
 
     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) |= ~(1 << interface.spi_cs_pin);
+    // *(interface.spi_cs_port) |= ~(1 << interface.spi_cs_pin);
 }
 // Function name   : ILI9488_TransferData
 // Functionality  : Send 1 byte data to ILI9488 (can also receive value if necessary)
@@ -160,129 +169,113 @@ void ILI9488_Initialize(ili9488_interface_t interface)
     SoftSPI_InitSelectPin(interface.spi_cs_port, interface.spi_cs_pin);
 
     ILI9488_Reset(interface);
-
-    // Issue chip select (target device)
-    // reset chip select (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
-
+    __delay_ms(150); // See reset page (306-309) of datasheet. This is the longest necessary time needed after any hardware reset
+    
     // Positive and negative gamma control taken from: https://github.com/jaretburkett/ILI9488/blob/master/ILI9488.cpp
-    ILI9488_SendCommand(interface, ILI9488_POSITIVE_GAMMA_CONTROL);
-    ILI9488_SendByte(interface, 0x00);
-    ILI9488_SendByte(interface, 0x03);
-    ILI9488_SendByte(interface, 0x09);
-    ILI9488_SendByte(interface, 0x08);
-    ILI9488_SendByte(interface, 0x16);
-    ILI9488_SendByte(interface, 0x0A);
-    ILI9488_SendByte(interface, 0x3F);
-    ILI9488_SendByte(interface, 0x78);
-    ILI9488_SendByte(interface, 0x4C);
-    ILI9488_SendByte(interface, 0x09);
-    ILI9488_SendByte(interface, 0x0A);
-    ILI9488_SendByte(interface, 0x08);
-    ILI9488_SendByte(interface, 0x16);
-    ILI9488_SendByte(interface, 0x1A);
-    ILI9488_SendByte(interface, 0x0F);
+    // uint8_t pos_gamma_ctrl[] = {0x00,
+    //                             0x03,
+    //                             0x09,
+    //                             0x08,
+    //                             0x16,
+    //                             0x0A,
+    //                             0x3F,
+    //                             0x78,
+    //                             0x4C,
+    //                             0x09,
+    //                             0x0A,
+    //                             0x08,
+    //                             0x16,
+    //                             0x1A,
+    //                             0x0F}
+    // ILI9488_SendCommand(interface, ILI9488_POSITIVE_GAMMA_CONTROL, pos_gamma_ctrl, sizeof(pos_gamma_ctrl));
+    // uint8_t neg_gamma_ctrl[] = {0x00,
+    //                             0x16,
+    //                             0x19,
+    //                             0x03,
+    //                             0x0F,
+    //                             0x05,
+    //                             0x32,
+    //                             0x45,
+    //                             0x46,
+    //                             0x04,
+    //                             0x0E,
+    //                             0x0D,
+    //                             0x35,
+    //                             0x37,
+    //                             0x0F}
+    // ILI9488_SendCommand(interface, ILI9488_NEGATIVE_GAMMA_CONTROL, neg_gamma_ctrl, sizeof(neg_gamma_ctrl));
 
+    const uint8_t pwr_ctrl_1[]     = {0x17, 
+                                      0x15};
 
-    ILI9488_SendCommand(interface, ILI9488_NEGATIVE_GAMMA_CONTROL);
-    ILI9488_SendByte(interface, 0x00);
-    ILI9488_SendByte(interface, 0x16);
-    ILI9488_SendByte(interface, 0x19);
-    ILI9488_SendByte(interface, 0x03);
-    ILI9488_SendByte(interface, 0x0F);
-    ILI9488_SendByte(interface, 0x05);
-    ILI9488_SendByte(interface, 0x32);
-    ILI9488_SendByte(interface, 0x45);
-    ILI9488_SendByte(interface, 0x46);
-    ILI9488_SendByte(interface, 0x04);
-    ILI9488_SendByte(interface, 0x0E);
-    ILI9488_SendByte(interface, 0x0D);
-    ILI9488_SendByte(interface, 0x35);
-    ILI9488_SendByte(interface, 0x37);
-    ILI9488_SendByte(interface, 0x0F);
+    const uint8_t pwr_ctrl_2[]     = {0x15};
 
-    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_1);      //Power Control 1
-    ILI9488_SendByte(interface, 0x17);    //Vreg1out
-    ILI9488_SendByte(interface, 0x15);    //Verg2out
+    const uint8_t pwr_ctrl_3[]     = {0x00, 
+                                      0x12, 
+                                      0x80};
 
-    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_2);      //Power Control 2
-    ILI9488_SendByte(interface, 0x41);    //VGH,VGL
+    const uint8_t mad_ctrl[]       = {0x00};
+    const uint8_t pxl_fmt[]        = {0x66};
+    const uint8_t interface_ctrl[] = {0x80};
+    const uint8_t frm_rt_ctrl[]    = {0x00};
+    const uint8_t disp_inv_ctrl[]  = {0x02};
 
-    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_3);      //Power Control 3
-    ILI9488_SendByte(interface, 0x00);
-    ILI9488_SendByte(interface, 0x12);    //Vcom
-    ILI9488_SendByte(interface, 0x80);
+    const uint8_t disp_func_ctrl[] = {0x02,
+                                      0x02};
 
-    ILI9488_SendCommand(interface, ILI9488_MEMORY_ACCESS_CONTROL);      //Memory Access
-    ILI9488_SendByte(interface, 0x48);
+    const uint8_t img_func[]       = {0x00};
 
-    ILI9488_SendCommand(interface, 0x3A);      // Interface Pixel Format
-    ILI9488_SendByte(interface, 0x66); 	  //18 bit
+    const uint8_t adj_ctrl_3[]     = {0xa9, 
+                                      0x5c, 
+                                      0x2c, 
+                                      0xb2};
 
-    ILI9488_SendCommand(interface, 0XB0);      // Interface Mode Control
-    ILI9488_SendByte(interface, 0x80);     			 //SDO NOT USE
-
-    ILI9488_SendCommand(interface, 0xB1);      //Frame rate
-    ILI9488_SendByte(interface, 0xA0);    //60Hz
-
-    ILI9488_SendCommand(interface, 0xB4);      //Display Inversion Control
-    ILI9488_SendByte(interface, 0x02);    //2-dot
-
-    ILI9488_SendCommand(interface, 0XB6);      //Display Function Control  RGB/MCU Interface Control
-
-    ILI9488_SendByte(interface, 0x02);    //MCU
-    ILI9488_SendByte(interface, 0x02);    //Source,Gate scan dieection
-
-    ILI9488_SendCommand(interface, 0XE9);      // Set Image Functio
-    ILI9488_SendByte(interface, 0x00);    // Disable 24 bit data
-
-    ILI9488_SendCommand(interface, 0xF7);      // Adjust Control
-    ILI9488_SendByte(interface, 0xA9);
-    ILI9488_SendByte(interface, 0x51);
-    ILI9488_SendByte(interface, 0x2C);
-    ILI9488_SendByte(interface, 0x82);    // D7 stream, loose
+    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_1, pwr_ctrl_1, 2);      //Power Control 1
+    // ILI9488_SendByte(interface, 0x17);    //Vreg1out
+    // ILI9488_SendByte(interface, 0x15);    //Verg2out
     
-    // // Normal display mode ON (13h)
-    // ILI9488_SendCommand(interface, ILI9488_NORMAL_DISPLAY_MODE_ON);
-
-    // // IDLE Mode OM (39h) (only allows 8-colors to be displayed instead of the 262,144 when not idle)
-    // ILI9488_SendCommand(interface, ILI9488_IDLE_MODE_ON);
-
-    // // Display Inversion Off
-    // ILI9488_SendCommand(interface, ILI9488_DISPLAY_INVERSION_OFF);
+    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_2, pwr_ctrl_2, 1);      //Power Control 2
+    // ILI9488_SendByte(interface, 0x41);    //VGH,VGL
     
-    // // Interface Pixel Format (3Ah) = 0x01 (8bit)
-    // ILI9488_SendCommand(interface, ILI9488_INTERFACE_PIXEL_FORMAT);
-    // ILI9488_SendByte(interface, 0x66);
-    
-    // // Memory Access Control (36h) : 0x48
-    // // 0x88 (MY=1, MX=0, MV=0) → Bottom-left origin, landscape orientation
-    // ILI9488_SendCommand(interface, ILI9488_MEMORY_ACCESS_CONTROL);
-    // ILI9488_SendByte(interface, 0x88);
-    
-    // // Frame Rate Control (B2h)
-    // ILI9488_SendCommand(interface, ILI9488_FRAME_RATE_CONTROL_IDLE);
-    // ILI9488_SendByte(interface, 0x00);  // Recommended value (depends on datasheet)
+    ILI9488_SendCommand(interface, ILI9488_POWER_CONTROL_3, pwr_ctrl_3, 3);      //Power Control 3
+    // ILI9488_SendByte(interface, 0x00);
+    // ILI9488_SendByte(interface, 0x12);    //Vcom
     // ILI9488_SendByte(interface, 0x80);
-
-    // // Display Function Control (B6h)
-    // ILI9488_SendCommand(interface, ILI9488_DISPLAY_FUNCTION_CONTROL);
-    // ILI9488_SendByte(interface, 0x0A);
-    // ILI9488_SendByte(interface, 0x82);
-
-    // ILI9488_SendCommand(interface, ILI9488_WRITE_DISPLAY_BRIGHTNESS);
-    // ILI9488_SendByte(interface, 0xFF); // Maximum brightness
-
+    
+    ILI9488_SendCommand(interface, ILI9488_MEMORY_ACCESS_CONTROL, mad_ctrl, 1);      //Memory Access
+    // ILI9488_SendByte(interface, 0x00);  // No change to the r/w scanning of the screen
+    
+    ILI9488_SendCommand(interface, ILI9488_INTERFACE_PIXEL_FORMAT, pxl_fmt, 1);      // Interface Pixel Format
+    // ILI9488_SendByte(interface, 0x66); 	  //18 bit
+    
+    ILI9488_SendCommand(interface, ILI9488_INTERFACE_MODE_CONTROL, interface_ctrl, 1);      // Interface Mode Control
+    // ILI9488_SendByte(interface, 0x80);     			 //SDO NOT USE
+    
+    ILI9488_SendCommand(interface, ILI9488_FRAME_RATE_CONTROL_IDLE, frm_rt_ctrl, 1);      //Frame rate
+    // ILI9488_SendByte(interface, 0x00);    //60Hz
+    
+    ILI9488_SendCommand(interface, ILI9488_DISPLAY_INVERSION_CONTROL, disp_inv_ctrl, 1);      //Display Inversion Control
+    // ILI9488_SendByte(interface, 0x02);    //2-dot
+    
+    ILI9488_SendCommand(interface, ILI9488_DISPLAY_FUNCTION_CONTROL, disp_func_ctrl, 2);      //Display Function Control  RGB/MCU Interface Control
+    // ILI9488_SendByte(interface, 0x02);    //MCU
+    // ILI9488_SendByte(interface, 0x02);    //Source,Gate scan dieection
+    
+    ILI9488_SendCommand(interface, ILI9488_SET_IMAGE_FUNCTION, img_func, 1);      // Set Image Functio
+    // ILI9488_SendByte(interface, 0x00);    // Disable 24 bit data
+    
+    ILI9488_SendCommand(interface, ILI9488_ADJUST_CONTROL_3, adj_ctrl_3, 4);      // Adjust Control
+    // ILI9488_SendByte(interface, 0xA9);
+    // ILI9488_SendByte(interface, 0x51);
+    // ILI9488_SendByte(interface, 0x2C);
+    // ILI9488_SendByte(interface, 0x82);    // D7 stream, loose
+    
     // Sleep OUT (11h)
-    ILI9488_SendCommand(interface, ILI9488_SLEEP_OUT);
-
+    ILI9488_SendCommand(interface, ILI9488_SLEEP_OUT, NULL, 0);
+    __delay_ms(120);
     // Display ON (29h)
-    ILI9488_SendCommand(interface, ILI9488_DISPLAY_ON);
-    
-    __delay_ms(5);
-    
-    // Issue chip select (target device)
-    *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
+    ILI9488_SendCommand(interface, ILI9488_DISPLAY_ON, NULL, 0);
+    __delay_ms(120);
 }
 
 // Function name   : ILI9488_Set_Window
@@ -293,7 +286,7 @@ void ILI9488_Initialize(ili9488_interface_t interface)
 void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
     // Set X range
-    ILI9488_SendCommand(interface, ILI9488_PAGE_ADDRESS_SET);
+    ILI9488_SendCommand(interface, ILI9488_PAGE_ADDRESS_SET, NULL, 0);
     
     // Send X-axis start point to SPI buffer in 8-bit units
     ILI9488_SendByte(interface, x >> 8);
@@ -304,7 +297,7 @@ void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, u
     ILI9488_SendByte(interface, (x + w - 1) & 0xFF);
     
     // Set Y range
-    ILI9488_SendCommand(interface, 0x2A);
+    ILI9488_SendCommand(interface, 0x2A, NULL, 0);
     
     // Send Y-axis start point to SPI buffer in 8-bit units
     ILI9488_SendByte(interface, y >> 8);
@@ -314,7 +307,7 @@ void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, u
     ILI9488_SendByte(interface, (y + h - 1) >> 8);
     ILI9488_SendByte(interface, (y + h - 1) & 0xFF);
     
-    ILI9488_SendCommand(interface, 0x2C);
+    ILI9488_SendCommand(interface, 0x2C, NULL, 0);
 }
 
 // Function name   : DMA_ILI9488_FillBackground
