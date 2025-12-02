@@ -19,16 +19,16 @@ void ili9488_write_bitmap(ScreenDefines Screen, Ili9488WriteBitmap args) {
     // if( (args.ystart > args.yend) || (args.ystart > 128)) return;
 
     /** Set RAM pointer constraints based on x and y values given */
-    ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
-    ili9488_send_command(Screen, SET_COLUMN_ADDRESS, args.xstart, args.xend);
+    ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
+    ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, args.xstart, args.xend);
 
     /** For now there is no deciding how to pad/ write odd size bitmaps. I hope your bitmap has a height multiple of 8...*/
-    ili9488_send_command(Screen, SET_PAGE_ADDRESS, args.ystart / 8, args.yend / 8);
+    ILI9488_SendCommand(Screen, SET_PAGE_ADDRESS, args.ystart / 8, args.yend / 8);
     size_t size = load_i2c_buffer(Screen, (uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, args.pbitmap, args.length);
 
     ssd_write(Screen, size);
 
-    ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
+    ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
     ili9488_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
 }
 
@@ -179,13 +179,13 @@ size_t ili9488_write_number(ScreenDefines Screen, Ili9488WriteNumber args) {
     ssd_write(Screen, write_length); // The number of bytes to write to the i2c buffer is the number of characters multiplied by the width of each character (5) plus the padding (1 byte) between each character
 
     // Memory addressing mode back to page addressing
-    ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
+    ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
 
     // Set the column range back to its reset value
-    ili9488_send_command(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
+    ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
 
     // Set the page range back to its reset value
-    ili9488_send_command(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
+    ILI9488_SendCommand(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
 
     level_log(TRACE, "SSD1309: Done Writing Number");
     REMOVE_FROM_STACK_DEPTH(); // ili9488_write_number
@@ -232,7 +232,7 @@ size_t ili9488_print(ScreenDefines Screen, Ili9488Print args) {
     }
 
     /* Constrain the columns so that we skip the first and last. This way frames don't get overwritten */
-    ili9488_send_command(Screen, SET_COLUMN_ADDRESS, 1, 126);
+    ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, 1, 126);
 
     ili9488_set_ram_pointer(Screen, args.ram_ptr); // Put the cursor where specified in the args structure
 
@@ -258,13 +258,13 @@ size_t ili9488_print(ScreenDefines Screen, Ili9488Print args) {
             level_log(TRACE, "Print: Scaling the text by 2");
 
             // Set addressing to vertical addressing. (simulate page addressing but across two pages instead of one)
-            ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
+            ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
 
             // Set the column range from whatever the start position is equal to and go to the end of the screen 
-            ili9488_send_command(Screen, SET_COLUMN_ADDRESS, args.ram_ptr.position, 0xFF);
+            ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, args.ram_ptr.position, 0xFF);
 
             // Set the page range to 2 since each page is 8 pixels tall, and we are scaling by 2, that gives us 16 pixels of height
-            ili9488_send_command(Screen, SET_PAGE_ADDRESS, args.ram_ptr.page, args.ram_ptr.page + 1);
+            ILI9488_SendCommand(Screen, SET_PAGE_ADDRESS, args.ram_ptr.page, args.ram_ptr.page + 1);
 
             ADD_TO_STACK_DEPTH(); // loading i2c buffer with scaled data
 
@@ -436,13 +436,13 @@ size_t ili9488_print(ScreenDefines Screen, Ili9488Print args) {
     } // Switch(args.delay)
 
     // Memory addressing mode back to page addressing
-    ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
+    ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
 
     // Set the column range back to its reset value
-    ili9488_send_command(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
+    ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
 
     // Set the page range back to its reset value
-    ili9488_send_command(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
+    ILI9488_SendCommand(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
     level_log(TRACE, "Print: Done Printing. Setting Memory Addressing Mode to Page Addressing");
 
     REMOVE_FROM_STACK_DEPTH(); // ili9488_print

@@ -5,6 +5,30 @@
 
 #include "system.h" 
 
+
+/**
+ * Interface Structure
+ * (This is an SPI Screen)
+ * 
+ */
+typedef struct ILI9488_INTERFACE {
+    uint8_t * spi_miso_port;
+    uint8_t * spi_mosi_port;
+    uint8_t * spi_dc_port;
+    uint8_t * spi_cs_port;
+    uint8_t * spi_clock_port;
+    
+    uint8_t   spi_miso_pin;
+    uint8_t   spi_mosi_pin;
+    uint8_t   spi_dc_pin;
+    uint8_t   spi_cs_pin;
+    uint8_t   spi_clock_pin;
+
+    uint8_t * lcd_rst_port;
+    uint8_t   lcd_rst_pin;
+
+} ili9488_interface_t;
+
 /* 
  * Command Structures
  *
@@ -137,7 +161,7 @@ typedef struct Rect{
 typedef struct Font_ByteOffset{
     uint8_t* pfont;
     uint8_t ascii;
-    uint8_t control;
+    // uint8_t control;
 } FontOffset;
 
 typedef struct CharacterAttributes{
@@ -160,16 +184,16 @@ typedef struct ScreenMetaData{
     uint8_t* pbuffer;
     size_t   buffer_size;
 
-    uint8_t* startup_buffer;
-    uint8_t  startup_size;
+    // uint8_t* startup_buffer;
+    // uint8_t  startup_size;
 
-    uint8_t  i2c_address;
+    // uint8_t  i2c_address;
 
-    uint8_t* rst_lat_port;
-    uint8_t  rst_pin;
+    // uint8_t* rst_lat_port;
+    // uint8_t  rst_pin;
 
     Ili9488RamPointer zeroed_ram_ptr;
-    Ili9488Wait* pwait;
+    // Ili9488Wait* pwait;
 
     FontOffset offset;
     CharAttributes character;
@@ -181,6 +205,7 @@ typedef struct ScreenMetaData{
  */
 typedef struct GeneralScreenStruct{
     ScreenDefines Screen;
+    ili9488_interface_t interface;
     // Ili9488WriteNumber write_number;
     // Ili9488Print print;
     // Ili9488Prnt PRINT;
@@ -189,7 +214,7 @@ typedef struct GeneralScreenStruct{
     // Ili9488RamWrite ram_write;
     // Ili9488RamPointer ram_ptr;
     // Ili9488Clear clr_line;
-    Ili9488Wait wait;
+    // Ili9488Wait wait;
     // ScreenStringPerLine screen_strings;
 } Ili9488Defines;
 

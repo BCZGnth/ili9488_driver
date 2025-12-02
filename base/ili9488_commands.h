@@ -245,4 +245,19 @@ typedef struct {
     unsigned reserved2 : 3;
 } ili9488_image_mode_t;
 
+
+// Send command to ILI9488 (received value is ignored)
+void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char cmd, uint8_t* pdata, size_t data_length);
+
+// Send data to ILI9488 (received value is ignored)
+void ILI9488_SendData(ili9488_interface_t interface, uint8_t * data, size_t len);
+
+// Send single byte to ILI9488 (received value is ignored)
+void ILI9488_SendByte(ili9488_interface_t interface, uint8_t data);
+
+// Send/receive data to/from ILI9488
+void ILI9488_TransferData(ili9488_interface_t interface, uint8_t* exchange_data, size_t len);
+
+void ILI9488_ReadData(ili9488_interface_t interface, uint8_t* data_from_screen, size_t len);
+
 #endif

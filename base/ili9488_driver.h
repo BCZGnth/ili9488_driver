@@ -19,24 +19,6 @@
 
 #include "system.h"
 
-typedef struct ILI9488_INTERFACE {
-    uint8_t * spi_miso_port;
-    uint8_t * spi_mosi_port;
-    uint8_t * spi_dc_port;
-    uint8_t * spi_cs_port;
-    uint8_t * spi_clock_port;
-    
-    uint8_t   spi_miso_pin;
-    uint8_t   spi_mosi_pin;
-    uint8_t   spi_dc_pin;
-    uint8_t   spi_cs_pin;
-    uint8_t   spi_clock_pin;
-
-    uint8_t * lcd_rst_port;
-    uint8_t   lcd_rst_pin;
-
-} ili9488_interface_t;
-
 //==============================================================================
 // ILI9488 Basic Control Function Prototypes
 //==============================================================================
@@ -44,22 +26,8 @@ typedef struct ILI9488_INTERFACE {
 // Hardware reset of ILI9488 (LOW = reset / HIGH = start)
 void ILI9488_Reset(ili9488_interface_t interface);
 
-// Send command to ILI9488 (received value is ignored)
-void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char cmd, uint8_t* pdata, size_t data_length);
-
-// Send data to ILI9488 (received value is ignored)
-void ILI9488_SendData(ili9488_interface_t interface, uint8_t * data, size_t len);
-
-// Send single byte to ILI9488 (received value is ignored)
-void ILI9488_SendByte(ili9488_interface_t interface, uint8_t data);
-
-// Send/receive data to/from ILI9488
-void ILI9488_TransferData(ili9488_interface_t interface, uint8_t* exchange_data, size_t len);
-
-void ILI9488_ReadData(ili9488_interface_t interface, uint8_t* data_from_screen, size_t len);
-
 // Initialize ILI9488 using SPI1 (MSSP)
-void ILI9488_Initialize(ili9488_interface_t interface);
+Ili9488Defines ILI9488_Initialize(ili9488_interface_t interface);
 
 // Set the drawing window (coordinates x, y, width w, height h)
 void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
