@@ -30,7 +30,7 @@ void ILI9488_Reset(ili9488_interface_t interface);
 Ili9488Defines ILI9488_Initialize(ili9488_interface_t interface);
 
 // Set the drawing window (coordinates x, y, width w, height h)
-void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+// void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 
 //==============================================================================
 // ILI9488 DMA Drawing Function Prototypes

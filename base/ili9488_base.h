@@ -44,8 +44,10 @@ typedef struct unusedCommandLengths{
 } Ili9488CommandLengths;
 
 typedef struct CursorPointer{
-    uint16_t row;
-    uint16_t column;
+    uint16_t start_row;
+    uint16_t start_column;
+    uint16_t end_row;
+    uint16_t end_column;
 } Ili9488RamPointer;
 
 /* 
@@ -106,10 +108,6 @@ typedef struct Prnt{
 typedef struct WriteBitmap{
     uint8_t * pbitmap;
     uint8_t   length;
-    uint8_t   xstart;
-    uint8_t   ystart;
-    uint8_t   xend;
-    uint8_t   yend;
 
     Ili9488RamPointer ram_ptr;
 } Ili9488WriteBitmap;
@@ -127,9 +125,8 @@ typedef struct RamWrite{
     Ili9488RamPointer ram_ptr;
 } Ili9488RamWrite;
 
-typedef struct ClearLine{
+typedef struct ClearLines{
     Ili9488RamPointer ram_ptr;
-    uint8_t char_length;
     uint8_t start_page;
     uint8_t end_page; 
 } Ili9488Clear;
@@ -218,5 +215,122 @@ typedef struct GeneralScreenStruct{
     // ScreenStringPerLine screen_strings;
 } Ili9488Defines;
 
+
+/**
+ * Added 
+ */
+typedef struct {
+    unsigned memory_access_busy : 1; // Bit 0
+    unsigned tear_scanline_flag : 1; // Bit 1
+    unsigned idle_mode : 1;          // Bit 2
+    unsigned partial_mode : 1;       // Bit 3
+    unsigned sleep_out : 1;          // Bit 4
+    unsigned idlemode : 1;           // Bit 5
+    unsigned tear_effect_flag : 1;   // Bit 6
+    unsigned reserved : 1;           // Bit 7
+} ili9488_status_byte0_t;
+
+typedef struct {
+    uint8_t param1;   // Don't care (all X's)
+    
+    // Second Parameter (D[31:24])
+    union {
+        uint8_t raw;
+        struct {
+            unsigned reserved_24            : 1;  // D24 (bit 0)
+            unsigned horizontal_refresh_order : 1; // D25 (bit 1): 0=Left to Right, 1=Right to Left
+            unsigned rgb_bgr_order          : 1;  // D26 (bit 2): 0=RGB, 1=BGR
+            unsigned vertical_refresh       : 1;  // D27 (bit 3): 0=Top to Bottom, 1=Bottom to Top
+            unsigned row_column_exchange    : 1;  // D28 (bit 4): 0=Normal, 1=Reverse
+            unsigned column_address_order   : 1;  // D29 (bit 5): 0=Left to Right, 1=Right to Left
+            unsigned row_address_order      : 1;  // D30 (bit 6): 0=Top to Bottom, 1=Bottom to Top
+            unsigned booster_voltage_status : 1;  // D31 (bit 7): 0=OFF, 1=ON
+        } bits;
+    } param2;
+    
+    // Third Parameter (D[23:16])
+    union {
+        uint8_t raw;
+        struct {
+            unsigned display_normal_mode    : 1;  // D16 (bit 0): 0=OFF, 1=ON
+            unsigned sleep_mode             : 1;  // D17 (bit 1): 0=IN, 1=OUT
+            unsigned partial_mode           : 1;  // D18 (bit 2): 0=OFF, 1=ON
+            unsigned idle_mode              : 1;  // D19 (bit 3): 0=OFF, 1=ON
+            unsigned interface_color_pixel  : 3;  // D[22:20] (bits 4-6): 101=16bit, 110=18bit, 111=24bit
+            unsigned reserved_23            : 1;  // D23 (bit 7)
+        } bits;
+    } param3;
+    
+    // Fourth Parameter (D[15:8])
+    union {
+        uint8_t raw;
+        struct {
+            unsigned reserved_8             : 1;  // D8 (bit 0)
+            unsigned tearing_effect_line_on : 1;  // D9 (bit 1): 0=OFF, 1=ON
+            unsigned display_on             : 1;  // D10 (bit 2): 0=OFF, 1=ON
+            unsigned reserved_11_12         : 2;  // D[12:11] (bits 3-4)
+            unsigned inversion_status       : 1;  // D13 (bit 5): 0=OFF, 1=ON
+            unsigned reserved_14            : 1;  // D14 (bit 6)
+            unsigned vertical_scrolling     : 1;  // D15 (bit 7): 0=OFF, 1=ON
+        } bits;
+    } param4;
+    
+    // Fifth Parameter (D[7:0])
+    union {
+        uint8_t raw;
+        struct {
+            unsigned reserved_0_4           : 5;  // D[4:0] (bits 0-4)
+            unsigned tearing_effect_mode    : 1;  // D5 (bit 5): 0=Mode 1 (V-Blanking), 1=Mode 2 (H&V-Blanking)
+            unsigned reserved_6_7           : 2;  // D[7:6] (bits 6-7)
+        } bits;
+    } param5;
+    
+} ili9488_display_status_t;
+
+typedef struct {
+    unsigned booster_voltage_status : 1; // Booster on and working (1) : Booster off or has fault (0)
+    unsigned idle_mode_on_off : 1; // On (1) : Off (0)
+    unsigned partial_mode_on_off : 1; // On (1) : Off (0)
+    unsigned sleep_in_out : 1; // Out (1) : In (0)
+    unsigned display_normal_mode_on_off : 1; // On (1) : Off (0)
+    unsigned display_on_off : 1; // On (1) : Off (0)
+    unsigned reserved : 2;
+} ili9488_power_mode_t;
+
+typedef struct {
+    unsigned refresh_order : 1;   // MY
+    unsigned row_col_exchange : 1; // MX
+    unsigned row_col_swap : 1;     // MV
+    unsigned rgb_bgr_order : 1;    // ML
+    unsigned vertical_refresh : 1; // BGR
+    unsigned horiz_refresh : 1;    // MH
+    unsigned reserved : 2;         // Reserved bits
+} ili9488_madctl_t;
+
+typedef struct {
+    unsigned reserved;
+
+    struct {
+        unsigned reserved1 : 1;
+        unsigned dpi : 3;
+        unsigned reserved2 : 1;
+        unsigned dsi : 3;
+    } color_depth;  // Typically 0x55 = 16-bit, 0x66 = 18-bit
+
+} ili9488_pixel_format_t;
+
+typedef struct {
+    unsigned reserved : 4;
+    unsigned invert_mode : 1;  // 0 = Normal, 1 = Inverted
+    unsigned reserved2 : 3;
+} ili9488_image_mode_t;
+
+typedef struct
+{
+    unsigned char character;
+    uint8_t *data;     /* Packed 3-bit pixels: 2 pixels per byte */
+    uint16_t width;
+    uint16_t height;
+} Glyph;
 
 #endif // _Ili9488_BASE

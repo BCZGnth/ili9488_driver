@@ -3,6 +3,9 @@
 #include <string.h>
 
 #include "ili9488_api.h"
+#include "ili9488_commands.h"
+#include "ili9488_font.h"
+// #include "ili9488_driver.h"
 #include "logger.h"
 
 
@@ -13,24 +16,17 @@
  * @param ylength is expected to be length in bytes (how many bytes long in the y length)
  * @param bitmap expected to be a pointer to some value that is at leat a byte long so that
  */
-void ili9488_write_bitmap(ScreenDefines Screen, Ili9488WriteBitmap args) {
-    /** Preliminary checks that may or may not be useful... if a number is bigger than it is supposed to be, the extra bits will probably just be ignored. */
-    // if( (args.xstart > args.xend) || (args.xstart > 128)) return;
-    // if( (args.ystart > args.yend) || (args.ystart > 128)) return;
+// void ili9488_write_bitmap(ili9488_interface_t inter, Ili9488WriteBitmap args) {
+//     /** Preliminary checks that may or may not be useful... if a number is bigger than it is supposed to be, the extra bits will probably just be ignored. */
+//     // if( (args.xstart > args.xend) || (args.xstart > 128)) return;
+//     // if( (args.ystart > args.yend) || (args.ystart > 128)) return;
 
-    /** Set RAM pointer constraints based on x and y values given */
-    ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
-    ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, args.xstart, args.xend);
+//     /** Set RAM pointer constraints based on x and y values given */
+//     ili9488_set_ram_pointer(inter, args.ram_ptr);
 
-    /** For now there is no deciding how to pad/ write odd size bitmaps. I hope your bitmap has a height multiple of 8...*/
-    ILI9488_SendCommand(Screen, SET_PAGE_ADDRESS, args.ystart / 8, args.yend / 8);
-    size_t size = load_i2c_buffer(Screen, (uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, args.pbitmap, args.length);
-
-    ssd_write(Screen, size);
-
-    ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
-    ili9488_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
-}
+//     // NOTE: This is a horizontal bitmap write
+//     ili9488_gram_write(inter, args.pbitmap, args.length);
+// }
 
 
 
@@ -42,11 +38,13 @@ void ili9488_write_bitmap(ScreenDefines Screen, Ili9488WriteBitmap args) {
  * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
  * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
  */
-// void ili9488_ramWrite(ScreenDefines Screen, Ili9488RamWrite args) {
-//     size_t size = load_i2c_buffer(Screen, (uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, args.bitmap,  args.bitmap_length);
+void ili9488_ram_write(ili9488_interface_t inter, Ili9488RamWrite args) {
+    /** Set RAM pointer constraints based on x and y values given */
+    ili9488_set_ram_pointer(inter, args.ram_ptr);
 
-//     ssd_write(Screen, size);
-// }
+    // NOTE: This is a horizontal Ram Write
+    ili9488_gram_write(inter, args.bitmap, args.bitmap_length);
+}
 
 /**
 Each page has a capacity of 21 full characters. There are 8 pages,
@@ -257,15 +255,6 @@ size_t ili9488_print(ScreenDefines Screen, Ili9488Print args) {
         /** Scaling the text by 2. (Right now the code does not support anything else...)*/
             level_log(TRACE, "Print: Scaling the text by 2");
 
-            // Set addressing to vertical addressing. (simulate page addressing but across two pages instead of one)
-            ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
-
-            // Set the column range from whatever the start position is equal to and go to the end of the screen 
-            ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, args.ram_ptr.position, 0xFF);
-
-            // Set the page range to 2 since each page is 8 pixels tall, and we are scaling by 2, that gives us 16 pixels of height
-            ILI9488_SendCommand(Screen, SET_PAGE_ADDRESS, args.ram_ptr.page, args.ram_ptr.page + 1);
-
             ADD_TO_STACK_DEPTH(); // loading i2c buffer with scaled data
 
             /** 
@@ -403,64 +392,37 @@ size_t ili9488_print(ScreenDefines Screen, Ili9488Print args) {
 
             /** The amount of bytes that will be written over the buffer is equal to the width of a letter (defined in the above comment) */
 
-            if (!i2c.Write(Screen.i2c_address, letter_buffer, (Screen.character.width_pad * (args.scale * args.scale) + Screen.character.pad)))
-            {
-                level_log(WARNING, "Print: I2C Bus Busy");
-            }
-
-            if (!i2c.IsBusy())
-            {
-                if (i2c.ErrorGet() == I2C_ERROR_NONE)
-                {
-                    // I2C write successful
-                    level_log(TRACE, "Print: I2C Write Successful");
-                }
-                else
-                {
-                    // Error handling
-                    level_log(ERROR, "Print: I2C Write Failed");
-                }
-            }
-
-            // Wait for 90ms before writing the next letter
-            __delay_ms(90);
-            // for(uint8_t i = args.delay; i < 1; i--) { 
-            //     __delay_ms(80);
-            // }
-
-            REMOVE_FROM_STACK_DEPTH(); // Removing from the stack depth because this is a different I2C write than anything else in the program
-        }
-
         break;
 
     } // Switch(args.delay)
 
     // Memory addressing mode back to page addressing
-    ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
 
-    // Set the column range back to its reset value
-    ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
-
-    // Set the page range back to its reset value
-    ILI9488_SendCommand(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
     level_log(TRACE, "Print: Done Printing. Setting Memory Addressing Mode to Page Addressing");
 
     REMOVE_FROM_STACK_DEPTH(); // ili9488_print
 
-    return (args.length * 6);
+    return (args.length * Screen.character.width_pad);
 }
 
 
-void ili9488_cls(ScreenDefines Screen) {
-
+void ili9488_cls(ili9488_interface_t inter);
+{
     ADD_TO_STACK_DEPTH();
     level_log(TRACE, "Clearing the screen");
 
-    ili9488_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
+    Ili9488RamPointer full_screen = {
+        .start_row = 0,
+        .start_column = 0,
+        .end_row = 319,
+        .end_column = 479
+    };
+
+    ili9488_set_ram_pointer(inter, full_screen);
 
     /* Calculate the most efficient way to clear the screen with the given buffer */
     // Calculate total screen size in bytes (assuming 1 bit per pixel, 8 pixels per byte vertically)
-    unsigned int total_screen_bytes = Screen.ScreenWidth * Screen.ScreenHeight / 8;
+    unsigned total_screen_bytes = Screen.ScreenWidth * Screen.ScreenHeight / 2;
 
     // Use the full buffer size for clearing (assuming clear_length is the usable buffer size)
     /* We will also assume that the Screen.buffer_size is greater than 1 */
@@ -506,190 +468,248 @@ void ili9488_cls(ScreenDefines Screen) {
 }
 
 
-void ili9488_clear_line(ScreenDefines Screen, Ili9488Clear args)
-{
+// void ili9488_clear_block(Ili9488Defines screen, Ili9488RamPointer args)
+// {
 
-    ADD_TO_STACK_DEPTH();
+//     ADD_TO_STACK_DEPTH();
 
-    level_log(TRACE, "Clearing the screen");
+//     level_log(TRACE, "Clearing the screen");
 
-    /** Memory Corruption Error Checking */
-    if(Screen.buffer_size < Screen.ScreenWidth + Screen.offset.control) {
-        level_log(ERROR, "Buffer Size Too Small");
-        return;
-    }
+//     /** Memory Corruption Error Checking */
+//     if(screen.Screen.buffer_size < screen.Screen.ScreenWidth) {
+//         level_log(ERROR, "Buffer Size Too Small");
+//         return;
+//     }
 
-    Screen.zeroed_ram_ptr.page = args.start_page;
-    ili9488_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
+//     ili9488_set_ram_pointer(screen.interface, args);
 
-    #ifndef USE_STATIC_BUFFERS
-    Screen.pbuffer = malloc(129);
-    if(!Screen.pbuffer){
-        level_log(ERROR, "Memory allocation failed for the I2C buffer");
-        REMOVE_FROM_STACK_DEPTH();
-        return;
-    }
-    #endif
+//     #ifndef USE_STATIC_BUFFERS
+//     Screen.pbuffer = malloc(129);
+//     if(!Screen.pbuffer){
+//         level_log(ERROR, "Memory allocation failed for the I2C buffer");
+//         REMOVE_FROM_STACK_DEPTH();
+//         return;
+//     }
+//     #endif
 
-    memset(Screen.pbuffer, 0, Screen.ScreenWidth + Screen.offset.control);
-    // load_i2c_buffer((&SSD1309_RAM_WRITE_BYTE), 1, 0, 0);
-    memcpy(Screen.pbuffer, (&SSD1309_RAM_WRITE_BYTE), 1);
+//     for (uint8_t i = args.start_page; i < args.end_page; i++)
+//     {
+//         ssd_write(Screen, Screen.ScreenWidth + Screen.offset.control);
+//     }
+//     // ssd_write(9); // Compensate for the control byte at the start of the buffer. (The for loop really only writes 127 bytes to the screen)
 
-    for (uint8_t i = args.start_page; i < args.end_page; i++)
-    {
-        ssd_write(Screen, Screen.ScreenWidth + Screen.offset.control);
-    }
-    // ssd_write(9); // Compensate for the control byte at the start of the buffer. (The for loop really only writes 127 bytes to the screen)
+//     level_log(TRACE, "SSD1309: Screen Cleared");
+//     REMOVE_FROM_STACK_DEPTH();
+// }
 
-    level_log(TRACE, "SSD1309: Screen Cleared");
-    REMOVE_FROM_STACK_DEPTH();
-}
+// void ili9488_clear_word(ScreenDefines Screen, Ili9488Clear args)
+// {
+//     ADD_TO_STACK_DEPTH();
+//     level_log(TRACE, "Clearing a word of length %d", args.char_length);
 
-void ili9488_clear_word(ScreenDefines Screen, Ili9488Clear args)
-{
-    ADD_TO_STACK_DEPTH();
-    level_log(TRACE, "Clearing a word of length %d", args.char_length);
+//     ili9488_set_ram_pointer(Screen, args.ram_ptr);
 
-    ili9488_set_ram_pointer(Screen, args.ram_ptr);
+//     #ifndef USE_STATIC_BUFFERS
+//     Screen.pbuffer = malloc(129);
+//     if(!Screen.pbuffer){
+//         level_log(ERROR, "Memory allocation failed for the I2C buffer");
+//         REMOVE_FROM_STACK_DEPTH();
+//         return;
+//     }
+//     #endif
+//     #ifdef USE_STATIC_BUFFERS
+//     if( (Screen.character.width_pad * args.char_length + Screen.offset.control) > Screen.buffer_size) { 
+//         level_log(ERROR, "Buffer Too Small");
+//         return; 
+//     }
+//     #endif
 
-    #ifndef USE_STATIC_BUFFERS
-    Screen.pbuffer = malloc(129);
-    if(!Screen.pbuffer){
-        level_log(ERROR, "Memory allocation failed for the I2C buffer");
-        REMOVE_FROM_STACK_DEPTH();
-        return;
-    }
-    #endif
-    #ifdef USE_STATIC_BUFFERS
-    if( (Screen.character.width_pad * args.char_length + Screen.offset.control) > Screen.buffer_size) { 
-        level_log(ERROR, "Buffer Too Small");
-        return; 
-    }
-    #endif
+//     // Set the bytes that we need to zero. Length of each character plus the length of the pad between characters plus the length of the control data
+//     memset(Screen.pbuffer, 0, (Screen.character.width_pad * args.char_length) + Screen.offset.control);
+//     memcpy(Screen.pbuffer, (&SSD1309_RAM_WRITE_BYTE), 1);
 
-    // Set the bytes that we need to zero. Length of each character plus the length of the pad between characters plus the length of the control data
-    memset(Screen.pbuffer, 0, (Screen.character.width_pad * args.char_length) + Screen.offset.control);
-    memcpy(Screen.pbuffer, (&SSD1309_RAM_WRITE_BYTE), 1);
+//     // Write all the bytes that we manipulated
+//     ssd_write(Screen, (Screen.character.width_pad * args.char_length) + Screen.offset.control);
 
-    // Write all the bytes that we manipulated
-    ssd_write(Screen, (Screen.character.width_pad * args.char_length) + Screen.offset.control);
+//     level_log(TRACE, "SSD1309: Word(s) Cleared");
+//     REMOVE_FROM_STACK_DEPTH();
+// }
 
-    level_log(TRACE, "SSD1309: Word(s) Cleared");
-    REMOVE_FROM_STACK_DEPTH();
-}
+// void ili9488_blinking_cursor(ScreenDefines Screen, Ili9488Cursor args)
+// {
+//     /** Start by keeping track of how many function calls deep we are */
+//     ADD_TO_STACK_DEPTH();
+//     level_log(TRACE, "Blinking Cursor: page %u, column %u, repeats %u", args.ram_ptr.page, args.ram_ptr.position, args.repeats);
 
-void ili9488_blinking_cursor(ScreenDefines Screen, Ili9488Cursor args)
-{
-    /** Start by keeping track of how many function calls deep we are */
-    ADD_TO_STACK_DEPTH();
-    level_log(TRACE, "Blinking Cursor: page %u, column %u, repeats %u", args.ram_ptr.page, args.ram_ptr.position, args.repeats);
+//     size_t size;
 
-    size_t size;
+//     if(Screen.offset.control + 5 > Screen.buffer_size) {
+//         level_log(ERROR, "Buffer Size Too Small");
+//     }
 
-    if(Screen.offset.control + 5 > Screen.buffer_size) {
-        level_log(ERROR, "Buffer Size Too Small");
-    }
+//     /** malloc so that the cursor doesn't take up extra space */
+//     uint8_t cursor[5];
 
-    /** malloc so that the cursor doesn't take up extra space */
-    uint8_t cursor[5];
+//     ili9488_set_ram_pointer(Screen, args.ram_ptr);
 
-    ili9488_set_ram_pointer(Screen, args.ram_ptr);
+//     /** Modifying repeats to translate from number of repeats to iterations of the for loop that have to run */
+//     args.repeats *= 2;
+//     /** Using the pre-increment operator rather than adding one to repeats */
+//     args.repeats += 1; // Add one to make sure we end on a blank cursor 
 
-    /** Modifying repeats to translate from number of repeats to iterations of the for loop that have to run */
-    args.repeats *= 2;
-    /** Using the pre-increment operator rather than adding one to repeats */
-    args.repeats += 1; // Add one to make sure we end on a blank cursor 
+//     for (int i = 1; i < args.repeats; ++i)
+//     {
 
-    for (int i = 1; i < args.repeats; ++i)
-    {
+//         /** Decide whether to set the cursor all zeros or all ones */
+//         memset(&cursor, ((i % 2) * 0xFF), 5);
 
-        /** Decide whether to set the cursor all zeros or all ones */
-        memset(&cursor, ((i % 2) * 0xFF), 5);
+//         /** Loading and writing the i2c buffer */
+//         size = load_i2c_buffer(Screen,(uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, cursor, 5);
+//         ssd_write(Screen, size);
 
-        /** Loading and writing the i2c buffer */
-        size = load_i2c_buffer(Screen,(uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, cursor, 5);
-        ssd_write(Screen, size);
+//         ili9488_set_ram_pointer(Screen, args.ram_ptr);
+//         __delay_ms(200);
+//     }
 
-        ili9488_set_ram_pointer(Screen, args.ram_ptr);
-        __delay_ms(200);
-    }
+//     level_log(TRACE, "Blinking Cursor: Done Blinking Cursor");
+//     REMOVE_FROM_STACK_DEPTH();
+// }
 
-    level_log(TRACE, "Blinking Cursor: Done Blinking Cursor");
-    REMOVE_FROM_STACK_DEPTH();
-}
+// void ili9488_progress_bar(ScreenDefines Screen )
+// {
+//     return;
+// }
 
-void ili9488_progress_bar(ScreenDefines Screen )
-{
-    return;
-}
-
-void ili9488_waiting(ScreenDefines Screen)
-{
-    ADD_TO_STACK_DEPTH();
-    level_log(TRACE, "SSD1309 Waiting...");
+// void ili9488_waiting(ScreenDefines Screen)
+// {
+//     ADD_TO_STACK_DEPTH();
+//     level_log(TRACE, "SSD1309 Waiting...");
     
-    uint8_t animation_length = 14;
-    Ili9488RamPointer wait_ram_ptr = {
-        .page = 7,
-        .position = 112
-    };
+//     uint8_t animation_length = 14;
+//     Ili9488RamPointer wait_ram_ptr = {
+//         .page = 7,
+//         .position = 112
+//     };
 
-    /* Memory Corruption Error Checking */
-    if(Screen.buffer_size < animation_length + Screen.offset.control) { 
-        level_log(ERROR, "Buffer Too Small"); 
-        return; 
-    }
+//     /* Memory Corruption Error Checking */
+//     if(Screen.buffer_size < animation_length + Screen.offset.control) { 
+//         level_log(ERROR, "Buffer Too Small"); 
+//         return; 
+//     }
 
-    ili9488_set_ram_pointer(Screen, wait_ram_ptr);
+//     ili9488_set_ram_pointer(Screen, wait_ram_ptr);
 
-    uint8_t dots[24] = {0, 0xc0, 0xc0, 0, 0,  0, 0xc0, 0xc0, 0, 0,  0, 0xc0, 0xc0, 0, 0,  0, 0, 0, 0, 0,   0, 0, 0, 0 };
+//     uint8_t dots[24] = {0, 0xc0, 0xc0, 0, 0,  0, 0xc0, 0xc0, 0, 0,  0, 0xc0, 0xc0, 0, 0,  0, 0, 0, 0, 0,   0, 0, 0, 0 };
     
-    /* Depending on where we are in the cycle, either add another dot, or clear the space. 
-       We are using arrays instead of the ili9488_print function because this is at least a little faster. */
-    switch (Screen.pwait->three_ctr) {
-        case 0:
-            memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-            memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
-            ssd_write(Screen, animation_length + Screen.offset.control);
-            Screen.pwait->three_ctr += 1;
-            break;
-        case 1:
-        case 5:
-            memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-            memcpy(Screen.pbuffer + Screen.offset.control, &dots + 10, animation_length + Screen.offset.control);
-            ssd_write(Screen, animation_length + Screen.offset.control);
-            Screen.pwait->three_ctr += 1;
-            break;
-        case 2:
-        case 4:
-            memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-            memcpy(Screen.pbuffer + Screen.offset.control, &dots + 5, animation_length + Screen.offset.control);
-            ssd_write(Screen, animation_length + Screen.offset.control);
-            Screen.pwait->three_ctr += 1;
-            break;
-        case 3:
-            memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-            memcpy(Screen.pbuffer + Screen.offset.control, &dots, animation_length + Screen.offset.control);
-            ssd_write(Screen, animation_length + Screen.offset.control);
-            Screen.pwait->three_ctr += 1;
-            break;
-        case 6:
-        default:
-        /* Fast default case */
-            memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-            memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
-            ssd_write(Screen, animation_length + Screen.offset.control);
-            Screen.pwait->three_ctr = 0;
-            break;
-        // default:
-        //     memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-        //     memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
-        //     ssd_write(Screen, animation_length * Screen.character.width);
-        //     Screen.pwait->three_ctr = 0;
-        //     break;
+//     /* Depending on where we are in the cycle, either add another dot, or clear the space. 
+//        We are using arrays instead of the ili9488_print function because this is at least a little faster. */
+//     switch (Screen.pwait->three_ctr) {
+//         case 0:
+//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
+//             memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
+//             ssd_write(Screen, animation_length + Screen.offset.control);
+//             Screen.pwait->three_ctr += 1;
+//             break;
+//         case 1:
+//         case 5:
+//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
+//             memcpy(Screen.pbuffer + Screen.offset.control, &dots + 10, animation_length + Screen.offset.control);
+//             ssd_write(Screen, animation_length + Screen.offset.control);
+//             Screen.pwait->three_ctr += 1;
+//             break;
+//         case 2:
+//         case 4:
+//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
+//             memcpy(Screen.pbuffer + Screen.offset.control, &dots + 5, animation_length + Screen.offset.control);
+//             ssd_write(Screen, animation_length + Screen.offset.control);
+//             Screen.pwait->three_ctr += 1;
+//             break;
+//         case 3:
+//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
+//             memcpy(Screen.pbuffer + Screen.offset.control, &dots, animation_length + Screen.offset.control);
+//             ssd_write(Screen, animation_length + Screen.offset.control);
+//             Screen.pwait->three_ctr += 1;
+//             break;
+//         case 6:
+//         default:
+//         /* Fast default case */
+//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
+//             memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
+//             ssd_write(Screen, animation_length + Screen.offset.control);
+//             Screen.pwait->three_ctr = 0;
+//             break;
+//         // default:
+//         //     memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
+//         //     memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
+//         //     ssd_write(Screen, animation_length * Screen.character.width);
+//         //     Screen.pwait->three_ctr = 0;
+//         //     break;
+//     }
+
+//     level_log(TRACE, "SSD1309 Done Waiting");
+//     REMOVE_FROM_STACK_DEPTH();
+//     return;
+// }
+
+/**
+ * Function loads a static buffer with the screen-ready pixel 
+ */
+Glyph load_glyph_3bit(Glyph c, uint8_t fg, uint8_t bg, FontOffset font_offset)
+{
+    #define GLYPH_BUFFER_LENGTH 80
+    static uint8_t GlyphBuffer[GLYPH_BUFFER_LENGTH];
+
+    // Unnecessary Check for character ord. We will neglect this since reading from anywhere in memory will only mess up the display of that undefined character
+    // if (c < FONT_FIRST_CHAR || c > FONT_LAST_CHAR)
+    //     return g;
+
+    // Calculate the "ord" index of the character
+    uint8_t index = (c.character - font_offset.ascii);
+
+    /* Number of pixels and bytes needed (2 pixels per byte) */
+    uint16_t pixel_count = c.width * c.height;
+    uint16_t  glyph_byte_count = (pixel_count + (pixel_count % 8) / 8);
+    uint16_t byte_count  = (pixel_count + 1) / 2;
+
+    if(byte_count > GLYPH_BUFFER_LENGTH) {
+        byte_count = GLYPH_BUFFER_LENGTH;
     }
 
-    level_log(TRACE, "SSD1309 Done Waiting");
-    REMOVE_FROM_STACK_DEPTH();
-    return;
+    // Create a static buffer that will hold the glyph while we write it to the screen outside of this function.
+
+    c.data = &GlyphBuffer;
+
+    /* Potential for memory corruption here... */
+    memset(c.data, 0, GLYPH_BUFFER_LENGTH);
+
+    fg &= 0x07;  /* keep only 3 bits */
+    bg &= 0x07;
+
+    uint16_t out_pixel = 0;
+
+    /**
+     * font_data[index][row] contains one row, MSB = left pixel
+     *  Because the font will be stored horizontally for now, we can make some assumptions in the workings of this function
+     */
+    for (uint8_t glyph_byte = 0; glyph_byte < glyph_byte_count; glyph_byte++)
+    {
+        uint8_t glyph_bits = ascii_font[index][glyph_byte];
+
+        for (uint8_t pixel = 0; pixel < 8; pixel++)
+        {
+            uint8_t bit   = (glyph_bits >> (7 - pixel)) & 1;
+            uint8_t color = bit ? fg : bg;
+
+            uint16_t byte_index = out_pixel / 2;
+
+            if ((out_pixel & 1) == 0)
+                c.data[byte_index] |= (color & 0x07);
+            else
+                c.data[byte_index] |= (color & 0x07) << 3;
+
+            out_pixel++;
+        }
+    }
+
+    return c;
 }
