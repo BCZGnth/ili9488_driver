@@ -175,8 +175,8 @@ typedef struct CharacterAttributes{
  * This is the main structure used in data transmission to the screen.
  * */
 typedef struct ScreenMetaData{
-    uint8_t  ScreenHeight;
-    uint8_t  ScreenWidth;
+    uint16_t  ScreenHeight;
+    uint16_t  ScreenWidth;
 
     uint8_t* pbuffer;
     size_t   buffer_size;

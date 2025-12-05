@@ -445,7 +445,7 @@ void ili9488_cls(Ili9488Defines screen)
         .ram_ptr = {
             .start_row = 0,
             .start_column = 0,
-            .end_row = 319,
+            .end_row = screen.Screen.ScreenWidth,
             .end_column = 479
         },
         .buf = screen.Screen.pbuffer,

@@ -164,10 +164,10 @@ void ili9488_set_ram_pointer(ili9488_interface_t inter, Ili9488RamPointer args)
     uint8_t end_lsb   = (args.end_row & 0xff);
     ili9488_send_command(inter, ILI9488_PAGE_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 
-    uint8_t start_msb = (args.start_column >> 8) & 0xff;
-    uint8_t start_lsb = (args.start_column & 0xff);
-    uint8_t end_msb   = (args.end_column >> 8) & 0xff;
-    uint8_t end_lsb   = (args.end_column & 0xff);
+    start_msb = (args.start_column >> 8) & 0xff;
+    start_lsb = (args.start_column & 0xff);
+    end_msb   = (args.end_column >> 8) & 0xff;
+    end_lsb   = (args.end_column & 0xff);
     ili9488_send_command(inter, ILI9488_COLUMN_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 }
 
@@ -180,7 +180,7 @@ void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, size_t len)
     SPI1_ByteWrite((ILI9488_RAMWR & 0xff));
     // Set data mode to data
     *(inter.spi_dc_port) |= (1 << inter.spi_dc_pin);
-    SSPI1_BufferWrite(pbuf, len - 1);
+    SPI1_BufferWrite(pbuf, len - 1);
 
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     *(inter.spi_cs_port) |= (1 << inter.spi_cs_pin);

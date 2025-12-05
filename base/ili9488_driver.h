@@ -18,16 +18,17 @@
 #define ILI9488_DRIVER
 
 #include "system.h"
+#include "ili9488_base.h"
 
 //==============================================================================
 // ILI9488 Basic Control Function Prototypes
 //==============================================================================
 
 // Hardware reset of ILI9488 (LOW = reset / HIGH = start)
-void ILI9488_Reset(ili9488_interface_t interface);
+void ili9488_reset(ili9488_interface_t interface);
 
 // Initialize ILI9488 using SPI1 (MSSP)
-Ili9488Defines ILI9488_Initialize(ili9488_interface_t interface);
+Ili9488Defines ili9488_initialize(ili9488_interface_t interface);
 
 // Set the drawing window (coordinates x, y, width w, height h)
 // void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, uint16_t w, uint16_t h);

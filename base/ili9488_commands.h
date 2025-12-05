@@ -141,6 +141,7 @@
 #define ILI9488_RAMWR_CONTINUE               ILI9488_MEMORY_WRITE_CONTINUE
 #define ILI9488_RAMRD_CONTINUE               ILI9488_MEMORY_READ_CONTINUE
 
+#include "ili9488_base.h"
 
 // Send command to ILI9488 (received value is ignored)
 void ili9488_send_command(ili9488_interface_t interface, uint16_t cmd, ...);
