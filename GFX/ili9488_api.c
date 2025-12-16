@@ -31,28 +31,17 @@
 /**
  * Function loads a static buffer with the screen-ready pixel 
  */
-size_t load_glyph_3bit(Glyph * c, uint8_t fg, uint8_t bg, FontOffset font_offset, uint8_t * pbuf, size_t len)
+size_t load_glyph_3bit(char c, uint8_t fg, uint8_t bg, FontOffset font_offset, uint8_t * pbuf, size_t len)
 {
-
-    // Unnecessary Check for character ord. We will neglect this since reading from anywhere in memory will only mess up the display of that undefined character
-    // if (c < FONT_FIRST_CHAR || c > FONT_LAST_CHAR)
-    //     return g;
-
     // Calculate the "ord" index of the character
-    uint8_t index = (c->character - font_offset.ascii);
+    uint8_t index = (c - font_offset.ascii);
+    printf("loading character: \"%c\" with index %d\n", c, index);
 
     /* Number of pixels and bytes needed (2 pixels per byte) */
-    uint16_t pixel_count = c->width * c->height;
-    uint16_t  glyph_byte_count = (pixel_count + (pixel_count % 8) / 8);
+    uint16_t pixel_count = font_offset.height * font_offset.width;
     uint16_t byte_index = 0;
 
-    // if(byte_count > len) {
-    //     byte_count = len;
-    // }
-
     // Create a static buffer that will hold the glyph while we write it to the screen outside of this function.
-
-    c->pdata = pbuf;
 
     /* Potential for memory corruption here... */
     // memset(c->pdata, 0, GLYPH_BUFFER_LENGTH);
@@ -66,13 +55,17 @@ size_t load_glyph_3bit(Glyph * c, uint8_t fg, uint8_t bg, FontOffset font_offset
      * font_data[index][column (inverted)] contains one column, MSB = left-bottom pixel
      * 
      */
-    for (uint8_t glyph_byte = 0; glyph_byte < glyph_byte_count; glyph_byte++)
+    for (uint8_t glyph_byte = 0; glyph_byte < font_offset.bytes_per_char; glyph_byte++)
     {
-        uint8_t glyph_bits = ascii_font[index][glyph_byte];
-
+        uint8_t glyph_bits = *(font_offset.pfont + (index * font_offset.bytes_per_char) + glyph_byte);
+        printf("\n");
         for (uint8_t pixel = 7; pixel >= 0; pixel++)
         {
             uint8_t bit   = (glyph_bits >> (7 - pixel)) & 1;
+
+            /* Debug */
+            if(bit) { printf("1"); } else { printf("0"); }
+
             uint8_t color = bit ? fg : bg;
 
             byte_index = out_pixel / 2;
@@ -80,9 +73,9 @@ size_t load_glyph_3bit(Glyph * c, uint8_t fg, uint8_t bg, FontOffset font_offset
             if (byte_index >= len) break;
 
             if ((out_pixel & 1) == 0)
-                c->pdata[byte_index] |= (color & 0x07) << 3; // Pushing the n pixel to bits 5:3  
+                *(pbuf + byte_index) |= (color & 0x07) << 3; // Pushing the n pixel to bits 5:3  
             else
-                c->pdata[byte_index] |= (color & 0x07);      // Keeping the n + 1 pixel in bits 2:0 
+                *(pbuf + byte_index) |= (color & 0x07);      // Keeping the n + 1 pixel in bits 2:0 
                                                              // See datasheet section 4.7.2.1 for more information
             out_pixel++;
         }
@@ -106,7 +99,7 @@ void ili9488_ram_write(ili9488_interface_t inter, Ili9488RamWrite args) {
     /** Set RAM pointer constraints based on x and y values given */
     ili9488_set_ram_pointer(inter, args.ram_ptr);
 
-    // NOTE: This is a horizontal Ram Write
+    // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers.)
     ili9488_gram_write(inter, args.buf, args.buf_len);
 }
 
@@ -281,11 +274,11 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     uint16_t row_increment = 0;
 
     Ili9488RamPointer char_placement;
-    Glyph char_attrs = {
-        .character = '\0',
-        .height = char_bit_height_1x,
-        .width = char_bit_width_1x,
-    };
+    // Glyph char_attrs = {
+    //     .character = '\0',
+    //     .height = char_bit_height_1x,
+    //     .width = char_bit_width_1x,
+    // };
 
     /* Error Checks */
     // Length is zero
@@ -369,10 +362,10 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         printf("Char x = %d, Char y = %d, xoff = %d, yoff = %d", char_placement.start_column, char_placement.start_row, xoff, yoff);
         ili9488_set_ram_pointer(screen.interface, char_placement);
 
-        char_attrs.character = msg_char;
+        // char_attrs.character = msg_char;
 
         /* The write_len variable will always be smaller or equal to the screen.Screen.buffer_size */
-        write_len = load_glyph_3bit(&char_attrs, WHITE, BLACK, screen.Screen.offset, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        write_len = load_glyph_3bit(msg_char, WHITE, BLACK, screen.Screen.offset, screen.Screen.pbuffer, screen.Screen.buffer_size);
         /* but, just in case */
         if (write_len > screen.Screen.buffer_size) {
             write_len = screen.Screen.buffer_size;
@@ -389,6 +382,8 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         msg_letter++;
         msg_char = *(msg_letter);
         chars_written++;
+
+        printf("MSG Pointer: %p - MSG Char: %c - Chars Written: %d\n", msg_letter, msg_char, chars_written);
     }
     
     // Memory addressing mode back to page addressing

@@ -20,6 +20,7 @@
 #include "ili9488_driver.h"
 #include "ili9488_commands.h"
 #include "ili9488_base.h"
+#include "ili9488_font.h"
 
 // static uint32_t i;
 
@@ -55,8 +56,11 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
                 .width_pad = 12
             },
             .offset = {
-                .ascii = 32,
-                .pfont = NULL
+                .ascii = 32, // We only have the characters from 32 to 127. Thus the offset is 32
+                .pfont = NULL,
+                .height = 8,
+                .width = 5,
+                .bytes_per_char = 5
             },
             .ScreenHeight = 320,
             .ScreenWidth = 480,

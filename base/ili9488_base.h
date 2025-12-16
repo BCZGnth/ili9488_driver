@@ -159,6 +159,11 @@ typedef struct Rect{
 typedef struct Font_ByteOffset{
     uint8_t* pfont;
     uint8_t ascii;
+
+    uint8_t height;
+    uint8_t width;
+
+    uint8_t bytes_per_char;
     // uint8_t control;
 } FontOffset;
 
