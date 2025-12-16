@@ -23,7 +23,7 @@ void ili9488_send_command(ili9488_interface_t interface, uint16_t len_cmd, ...)
     printf("len is %d\n", len);
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
+    CS1_SetLow();
     // Set command mode (DC pin is command when LOW and data when HIGH)
     *(interface.spi_dc_port) &= ~(1 << interface.spi_dc_pin);
     
@@ -79,7 +79,7 @@ void ili9488_send_data(ili9488_interface_t interface, uint8_t* pdata, size_t dat
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
+    CS1_SetLow();
     
     // Set data mode (DC pin is command when LOW and data when HIGH)
     *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
@@ -111,7 +111,7 @@ void ili9488_send_byte(ili9488_interface_t interface, uint8_t data)
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
+    CS1_SetLow();
     // Set data mode (DC pin is command when LOW and data when HIGH)
     *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
     
@@ -144,7 +144,7 @@ void ili9488_transfer_data(ili9488_interface_t interface, uint8_t* tx_data, uint
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
+    CS1_SetLow();
     // Set data mode
     *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
     
@@ -169,7 +169,7 @@ void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen,
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
+    CS1_SetLow();
     // Set data mode
     *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
     
