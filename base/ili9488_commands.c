@@ -41,7 +41,7 @@ void ili9488_send_command(ili9488_interface_t interface, uint16_t len_cmd, ...)
     
 
     // Set the dc pin high again for the data portion of the transmit
-    *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
+    DC1_SetHigh();
 
     if(len) {
         // Iterate for as many bytes as the command expects
@@ -66,7 +66,7 @@ void ili9488_send_command(ili9488_interface_t interface, uint16_t len_cmd, ...)
     
     va_end(params);
     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
+    CS1_SetHigh();
 }
 
 /* Function name   : ILI9488_SendData
@@ -82,7 +82,7 @@ void ili9488_send_data(ili9488_interface_t interface, uint8_t* pdata, size_t dat
     CS1_SetLow();
     
     // Set data mode (DC pin is command when LOW and data when HIGH)
-    *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
+    DC1_SetHigh();
     
     // Data sending process
     // SendDataProc(data);
@@ -113,7 +113,7 @@ void ili9488_send_byte(ili9488_interface_t interface, uint8_t data)
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();
     // Set data mode (DC pin is command when LOW and data when HIGH)
-    *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
+    DC1_SetHigh();
     
     // Ignore reception with void cast
     #ifdef HARDWARE_SPI
@@ -126,7 +126,7 @@ void ili9488_send_byte(ili9488_interface_t interface, uint8_t data)
     #endif
 
     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
+    CS1_SetHigh();
 
 }
 
@@ -146,7 +146,7 @@ void ili9488_transfer_data(ili9488_interface_t interface, uint8_t* tx_data, uint
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();
     // Set data mode
-    *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
+    DC1_SetHigh();
     
     // Data sending process (send from buffer and write back to the same buffer)
     #ifdef HARDWARE_SPI
@@ -161,7 +161,7 @@ void ili9488_transfer_data(ili9488_interface_t interface, uint8_t* tx_data, uint
     #endif
 
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
+    CS1_SetHigh();
 
 }
 
@@ -171,7 +171,7 @@ void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen,
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();
     // Set data mode
-    *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
+    DC1_SetHigh();
     
     // Data sending process (send/receive based on mode)
     #ifdef HARDWARE_SPI
@@ -185,7 +185,7 @@ void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen,
     #endif
 
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
+    CS1_SetHigh();
 
 }
 /**
@@ -209,9 +209,9 @@ void ili9488_set_ram_pointer(ili9488_interface_t inter, Ili9488RamPointer args)
 void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, size_t len)
 {
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(inter.spi_cs_port) &= ~(1 << inter.spi_cs_pin);
+    CS1_SetLow();
     // Set data mode to Command
-    *(inter.spi_dc_port) &= ~(1 << inter.spi_dc_pin);
+    DC1_SetLow();
 
     #ifdef HARDWARE_SPI
     SPI1_Open(HOST_CONFIG);
@@ -219,25 +219,25 @@ void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, size_t len)
     while(!PIR3bits.SPI1TXIF);
     SPI1_Close();
     // Set data mode to data
-    *(inter.spi_dc_port) |= (1 << inter.spi_dc_pin);
+    DC1_SetHigh();
     SPI1_BufferWrite(pbuf, len);
     #else
     fast_spi_write_byte((ILI9488_RAMWR & 0xff));
-    *(inter.spi_dc_port) |= (1 << inter.spi_dc_pin);
+    DC1_SetHigh();
     fast_spi_write_buffer(pbuf, len);
     #endif
 
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(inter.spi_cs_port) |= (1 << inter.spi_cs_pin);
+    CS1_SetHigh();
 
 }
 
 void ili9488_gram_write_continue(ili9488_interface_t inter, uint8_t * pbuf, size_t len)
 {
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(inter.spi_cs_port) &= ~(1 << inter.spi_cs_pin);
+    CS1_SetLow();
     // Set data mode to Command
-    *(inter.spi_dc_port) &= ~(1 << inter.spi_dc_pin);
+    DC1_SetLow();
 
     #ifdef HARDWARE_SPI
     SPI1_Open(HOST_CONFIG);
@@ -245,15 +245,15 @@ void ili9488_gram_write_continue(ili9488_interface_t inter, uint8_t * pbuf, size
     while(!PIR3bits.SPI1TXIF);
     SPI1_Close();
     // Set data mode to data
-    *(inter.spi_dc_port) |= (1 << inter.spi_dc_pin);
+    DC1_SetHigh();
     SPI1_BufferWrite(pbuf, len);
     #else
     fast_spi_write_byte((ILI9488_RAMWR_CONTINUE & 0xff));
-    *(inter.spi_dc_port) |= (1 << inter.spi_dc_pin);
+    DC1_SetHigh();
     fast_spi_write_buffer(pbuf, len);
     #endif
 
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(inter.spi_cs_port) |= (1 << inter.spi_cs_pin);
+    CS1_SetHigh();
 
 }
