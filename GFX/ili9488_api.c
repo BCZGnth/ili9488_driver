@@ -7,7 +7,7 @@
 #include "ili9488_font.h"
 // #include "ili9488_driver.h"
 #include "logger.h"
-
+extern uint8_t some_test_font[475];
 
 /**
  * @brief a function for writing a bitmap to the screen
@@ -57,7 +57,7 @@ size_t load_glyph_3bit(char c, uint8_t fg, uint8_t bg, FontOffset font_offset, u
      */
     for (uint8_t glyph_byte = 0; glyph_byte < font_offset.bytes_per_char; glyph_byte++)
     {
-        uint8_t glyph_bits = *(font_offset.pfont + (index * font_offset.bytes_per_char) + glyph_byte);
+        uint8_t glyph_bits = some_test_font[index * font_offset.bytes_per_char + glyph_byte];
         printf("\n");
         for (uint8_t pixel = 7; pixel >= 0; pixel++)
         {

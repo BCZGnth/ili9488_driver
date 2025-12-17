@@ -157,7 +157,7 @@ typedef struct Rect{
  * CharAttributes: 
  */
 typedef struct Font_ByteOffset{
-    uint8_t* pfont;
+    const uint8_t * pfont;
     uint8_t ascii;
 
     uint8_t height;

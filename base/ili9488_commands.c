@@ -13,7 +13,7 @@ void ili9488_send_command(ili9488_interface_t interface, uint16_t len_cmd, ...)
 {
     uint8_t len = (len_cmd >> 8) & 0xff;
     uint8_t cmd = (len_cmd & 0xff);
-    uint8_t data[16];
+    uint8_t data;
     
     // Create the variadic list and start the 
     va_list params;
@@ -47,20 +47,20 @@ void ili9488_send_command(ili9488_interface_t interface, uint16_t len_cmd, ...)
         // Iterate for as many bytes as the command expects
         for(uint8_t blah = 0; blah < len; blah++)
         {
-            data[blah] = va_arg(params, uint8_t);
+            data = va_arg(params, uint8_t);
             // printf("Send data: %d at index %d\n", data[blah], blah);
+            
+            
+            #ifdef HARDWARE_SPI
+            SPI1_Open(HOST_CONFIG);
+            printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+            SPI1_BufferWrite(data, len);
+            printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+            SPI1_Close();
+            #else
+            fast_spi_write_byte(data);
+            #endif
         }
-
-        
-        #ifdef HARDWARE_SPI
-        SPI1_Open(HOST_CONFIG);
-        printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
-        SPI1_BufferWrite(data, len);
-        printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
-        SPI1_Close();
-        #else
-        fast_spi_write_buffer(data, len);
-        #endif
         
     }
     

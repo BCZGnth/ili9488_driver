@@ -57,7 +57,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
             },
             .offset = {
                 .ascii = 32, // We only have the characters from 32 to 127. Thus the offset is 32
-                .pfont = NULL,
+                .pfont = &(ascii_font[0]),
                 .height = 8,
                 .width = 5,
                 .bytes_per_char = 5
@@ -75,9 +75,9 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
     };
     
     #ifdef SOFTWARE_SPI
-    SoftSPI_InitDataInPin(interface.spi_miso_port, interface.spi_miso_pin);
-    SoftSPI_InitDataOutPin(interface.spi_mosi_port, interface.spi_mosi_pin);
-    SoftSPI_InitClockPin(interface.spi_clock_port, interface.spi_clock_pin);
+    // SoftSPI_InitDataInPin(interface.spi_miso_port, interface.spi_miso_pin);
+    // SoftSPI_InitDataOutPin(interface.spi_mosi_port, interface.spi_mosi_pin);
+    // SoftSPI_InitClockPin(interface.spi_clock_port, interface.spi_clock_pin);
 
     #endif
 
