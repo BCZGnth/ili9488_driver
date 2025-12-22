@@ -336,8 +336,8 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     uint16_t box_height = args.ram_ptr.end_y - args.ram_ptr.start_y + 1;
     uint16_t xoff;
     uint16_t yoff;
-    uint8_t write_width = char_bit_width_1x + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
-    uint8_t write_height = char_bit_height_1x;
+    uint8_t write_width = char_bit_width_2x + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
+    uint8_t write_height = char_bit_height_2x;
     size_t write_len;
     uint8_t char_pad = 1;
     size_t chars_written = 0;
@@ -416,9 +416,12 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             xoff = 0;
             row_increment += 1;
         }
-        yoff = (char_bit_height_1x * row_increment);
-        if(yoff + char_bit_height_1x > box_height) {
-            if ((yoff + (char_bit_height_1x * 2)) > box_height) {
+        yoff = (write_height * row_increment);
+        if(yoff + write_height > box_height) {
+            if ((yoff + (write_height * 2)) > box_height) {
+                break;
+            }
+            else if (write_height == box_height - yoff - 1) {
                 break;
             }
             // Constrain char_height to only go to the bottom of the box

@@ -124,8 +124,8 @@ const font_char_1x_t ascii_font_1x[] ={{ 0x00, 0x00, 0x00, 0x00, 0x00 },  //  sp
 
 typedef uint8_t font_char_2x_t[20];
 
-uint8_t char_bit_width_2x  = 10;
-uint8_t char_bit_height_2x = 16;
+const uint8_t char_bit_width_2x  = 10;
+const uint8_t char_bit_height_2x = 16;
 
 const font_char_2x_t ascii_font_2x[] = {
 
