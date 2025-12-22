@@ -6,5 +6,6 @@
 #include "ili9488_driver.h"
 #include "ili9488_api.h"
 #include "ili9488_font.h"
+#include "ili9488_shapes.h"
 
 #endif // _ILI9488_H

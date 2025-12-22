@@ -299,16 +299,19 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     uint8_t preserve_frame = 0;
     uint16_t box_width = args.ram_ptr.end_x - args.ram_ptr.start_x + 1;
     uint16_t box_height = args.ram_ptr.end_y - args.ram_ptr.start_y + 1;
-    uint16_t xoff;
-    uint16_t yoff;
+    uint16_t xoff = 0;
+    uint16_t yoff = 0;
     uint8_t write_width = char_bit_width_2x + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
     uint8_t write_height = char_bit_height_2x;
-    size_t write_len;
+    size_t write_len = 0;
     bool last_line_flag = false;
     uint8_t char_pad = 1;
     uint8_t char_height = char_bit_height_2x;
     size_t chars_written = 0;
     uint16_t row_increment = 0;
+
+    char * word_search_str;
+    uint8_t word_length;
 
     Ili9488RamPointer char_placement;
     // Glyph char_attrs = {
@@ -375,19 +378,45 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
      */
     while( msg_char != '\0')
     { // Iterate through all of the characters in the string
+
+        /**
+         * Create a word-aware wrapping feature:
+         *  1) Make sure we are not at the end of a line already
+         *  2) at every space character, do a word-search (where is the next space relative from here)
+         *  3) convert the word length to pixel length and compare to screen width left in row
+         *  4) reset xoff and increment row_increment
+         */
         
-        xoff = (write_width + char_pad) * chars_written;
-        // Add one to account for a zero indexed column/row arrangement. If a box is 8 rows tall in the top left corner, rows 0 - 7 will be taken up. Thus row 8 will be the ninth row
+        xoff += (write_width + char_pad);
         if(xoff + write_width + 1 > box_width) {
+            // Add one to account for a zero indexed column/row arrangement. If a box is 8 rows tall in the top left corner, rows 0 - 7 will be taken up. Thus row 8 will be the ninth row
             // Reset xoff and intcrement row counter
             xoff = 0;
             row_increment += 1;
 
             /* Break prematurely if the ram pointer box has been filled. */
-            // if(last_line_flag) break;
+            if(last_line_flag) break;
+
+        } else if(msg_char == ' ') {
+            word_length = 0;
+            word_search_str = msg_letter;
+            while(*msg_letter != ' ' || *msg_letter != '\0') {
+                word_length++;
+                msg_letter++;
+            }
+
+            /* Convert to pixel length */
+            word_length = word_length * (write_width * char_pad);
+
+            /* Compare word pixel length to remaining pixel length of row */
+            if( word_length > box_width - xoff ) {
+                xoff = 0;
+                row_increment += 1;
+            }
         }
+
         yoff = (char_height * row_increment);
-        if(yoff + char_height > box_height) {
+        if(yoff + char_height >= box_height) {
             // if ((yoff + (write_height * 2)) > box_height) {
             //     break;
             // }
@@ -396,7 +425,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             // }
             // Constrain char_height to only go to the bottom of the box
             // The unfortunate problem with this solution is that it does not allow for the correct pixels to be written at the correct places in the smaller box
-            write_height = (uint8_t)(box_height - yoff - 1); // - 1  For turning the 1 indexed number into a zero indexed number 
+            write_height = (uint8_t)(box_height - yoff);
             last_line_flag = true;
         }
 
@@ -405,7 +434,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         char_placement.start_y    = args.ram_ptr.start_y + yoff;
         char_placement.end_x   = char_placement.start_x + write_width - 1  /*- 1 To maintain Zero Indexing */;
         char_placement.end_y      = char_placement.start_y + write_height - 1 /*- 1 To Maintain Zero Indexing */;
-        // printf("Char x = %d, Char y = %d, xoff = %d, yoff = %d", char_placement.start_x, char_placement.start_y, xoff, yoff);
+        printf("Char x = %d, Char y = %d, xoff = %d, yoff = %d", char_placement.start_x, char_placement.start_y, xoff, yoff);
         ili9488_set_ram_pointer(screen.interface, char_placement);
 
         // char_attrs.character = msg_char;

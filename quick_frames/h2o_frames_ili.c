@@ -1,4 +1,4 @@
-#include "h2o_frames.h"
+#include "h2o_frames_ili.h"
 #include "ili9488.h"
 
 // void h2o_rectangular_frames(Ili9488Defines screen) {
@@ -120,7 +120,7 @@ void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
     };
 
     ili9488_print(       screen, ser_num);
-    ili9488_write_number(screen.Screen, ser_val);
+    ili9488_write_number(screen, ser_val);
 }
 
 void pretty_payload_frame(Ili9488Defines screen, uint32_t serial_number)
@@ -138,8 +138,10 @@ void pretty_payload_frame(Ili9488Defines screen, uint32_t serial_number)
         .text = "Ser #:",
         .length = 6,
         .ram_ptr = {
-            .page = 1,
-            .position = 3
+            .start_x = 0,
+            .start_y = 0,
+            .end_x = 0,
+            .end_y = 0
         },
         .scale = 1,
         .delay = 0
@@ -156,14 +158,16 @@ void pretty_payload_frame(Ili9488Defines screen, uint32_t serial_number)
         .constrained_length = 6,
         .data = serial_number,
         .ram_ptr = {
-            .page = 1,
-            .position = 42, 
+            .start_x = 0,
+            .start_y = 0,
+            .end_x = 0,
+            .end_y = 0
         },
         .scale = 1,
     };
 
-    ili9488_write_number(screen.Screen, ser_val);
-    ili9488_draw_rect(   screen.Screen, full_outline);
+    ili9488_write_number(screen, ser_val);
+    ili9488_draw_rect(   screen, full_outline);
     ili9488_print(       screen, SerNUM);
-    ili9488_draw_hline(  screen.Screen, ser_num_underline);
+    ili9488_draw_hline(  screen, ser_num_underline);
 }
