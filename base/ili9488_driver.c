@@ -14,7 +14,7 @@
 #include "system.h"
 
 // Software SPI
-#include "SoftSPI.h"
+#include "ili_SoftSPI.h"
 
 // ILI9488 driver function prototypes
 #include "ili9488_driver.h"

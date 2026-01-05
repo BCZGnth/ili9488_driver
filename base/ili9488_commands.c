@@ -1,6 +1,6 @@
 #include "ili9488_commands.h"
 #include "ili9488_base.h"
-#include "SoftSPI.h"
+#include "ili_SoftSPI.h"
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -165,7 +165,7 @@ void ili9488_transfer_data(ili9488_interface_t interface, uint8_t* tx_data, uint
 
 }
 
-void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen, size_t len)
+void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen, uint24_t len)
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
@@ -206,7 +206,7 @@ void ili9488_set_ram_pointer(ili9488_interface_t inter, Ili9488RamPointer args)
     ili9488_send_command(inter, ILI9488_PAGE_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 }
 
-void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, size_t len)
+void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, uint24_t len)
 {
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();
@@ -232,7 +232,7 @@ void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, size_t len)
 
 }
 
-void ili9488_gram_write_continue(ili9488_interface_t inter, uint8_t * pbuf, size_t len)
+void ili9488_gram_write_continue(ili9488_interface_t inter, uint8_t * pbuf, uint24_t len)
 {
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();

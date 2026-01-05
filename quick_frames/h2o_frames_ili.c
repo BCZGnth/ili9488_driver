@@ -68,9 +68,9 @@ void h2o_outline(Ili9488Defines screen) {
         .length = 16,
         .ram_ptr = {
             .start_x = 80,
-            .end_x = screen.Screen.ScreenWidth - 1,
+            .end_x = 284,
             .start_y = 100,
-            .end_y = screen.Screen.ScreenHeight - 1
+            .end_y = 116
         },
         .scale = 1,
         .delay = 1,
@@ -82,7 +82,8 @@ void h2o_outline(Ili9488Defines screen) {
         .xend = screen.Screen.ScreenWidth - 1,
         .ystart = 0,
         .yend = screen.Screen.ScreenHeight - 1,
-        .weight = 3
+        .weight = 3,
+        .color = MAGENTA,
     };
 
     ili9488_draw_rect(screen, full_outline);

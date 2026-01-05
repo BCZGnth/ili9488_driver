@@ -147,19 +147,19 @@ typedef struct WaitAnimate{
 } Ili9488Wait;
 
 typedef struct HVLine{
-    uint8_t xstart;
-    uint8_t ystart;
-    uint8_t length;
+    uint16_t xstart;
+    uint16_t ystart;
+    uint16_t length;
     color_t color;
-    uint8_t weight;
+    uint16_t weight;
 } Ili9488HVLine;
 
 typedef struct Rect{
-    uint8_t xstart;
-    uint8_t ystart;
-    uint8_t xend;
-    uint8_t yend;
-    uint8_t weight;
+    uint16_t xstart;
+    uint16_t ystart;
+    uint16_t xend;
+    uint16_t yend;
+    uint16_t weight;
     color_t color;
 } Ili9488Rect;
 

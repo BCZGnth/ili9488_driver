@@ -400,13 +400,15 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         } else if(msg_char == ' ') {
             word_length = 0;
             word_search_str = msg_letter;
-            while(*msg_letter != ' ' || *msg_letter != '\0') {
+            /* Initially increment the word_search_string so that it does not start on a space thus voiding the entire while loop */
+            word_search_str++;
+            while(*word_search_str != ' ' && *word_search_str != '\0') {
                 word_length++;
-                msg_letter++;
+                word_search_str++;
             }
 
-            /* Convert to pixel length */
-            word_length = word_length * (write_width * char_pad);
+            /* Convert to pixel length. Add 1 to the word length to account for the space in front of the word. */
+            word_length = (word_length + 1) * (write_width + char_pad);
 
             /* Compare word pixel length to remaining pixel length of row */
             if( word_length > box_width - xoff ) {
@@ -415,7 +417,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             }
         }
 
-        yoff = (char_height * row_increment);
+        yoff = ((char_height + char_pad) * row_increment);
         if(yoff + char_height >= box_height) {
             // if ((yoff + (write_height * 2)) > box_height) {
             //     break;
@@ -526,7 +528,7 @@ void ili9488_cls(Ili9488Defines screen)
         ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, (size_t)remainder);
      }
 
-    level_log(TRACE, "SSD1309: Screen Cleared");
+    level_log(TRACE, "Ili9488: Screen Cleared");
     REMOVE_FROM_STACK_DEPTH();
 }
 
