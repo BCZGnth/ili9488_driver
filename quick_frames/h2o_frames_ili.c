@@ -67,8 +67,8 @@ void h2o_outline(Ili9488Defines screen) {
         .text = "H2O Disconnected",
         .length = 16,
         .ram_ptr = {
-            .start_x = 80,
-            .end_x = 284,
+            .start_x = 138,
+            .end_x = 342,
             .start_y = 100,
             .end_y = 116
         },
@@ -93,13 +93,13 @@ void h2o_outline(Ili9488Defines screen) {
 void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
 {
     Ili9488Print ser_num = {
-        .text = "Ser #:",
+        .text = "SER_NUM = ",
         .length = 6,
         .ram_ptr = {
-            .start_x = 80,
-            .end_x = screen.Screen.ScreenWidth - 1,
+            .start_x = (screen.Screen.ScreenWidth - 240) / 2,
+            .end_x = ((screen.Screen.ScreenWidth - 240) / 2) + 120,
             .start_y = 6,
-            .end_y = screen.Screen.ScreenHeight - 1
+            .end_y = 6 + screen.Screen.character.height
         },
         // .scale = 1,
         // .delay = 0
@@ -111,10 +111,10 @@ void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
         .constrained_length = 6,
         .data = serial_number,
         .ram_ptr = {
-            .start_x = 178,
-            .end_x = screen.Screen.ScreenWidth - 1,
+            .start_x = ((screen.Screen.ScreenWidth - 240) / 2) + 121,
+            .end_x = ((screen.Screen.ScreenWidth - 240) / 2) + 241,
             .start_y = 6,
-            .end_y = screen.Screen.ScreenHeight - 1
+            .end_y = 6 + screen.Screen.character.height
         },
         // .scale = 1,
         .fg = CYAN
