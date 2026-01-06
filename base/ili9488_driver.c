@@ -71,8 +71,8 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
                 .width_pad = char_bit_width_2x + 2,
                 .bytes_per_char = 20
             },
-            .ScreenHeight = 320,
-            .ScreenWidth = 480,
+            .ScreenHeight = 480,
+            .ScreenWidth = 320,
             .zeroed_ram_ptr = {
                 .start_x = 0,
                 .start_y = 0,
@@ -93,76 +93,45 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
     ili9488_reset(LCD.interface);
     __delay_ms(150); // See reset page (306-309) of datasheet. This is the longest necessary time needed after any hardware reset
     
-    // Positive and negative gamma control taken from: https://github.com/jaretburkett/ILI9488/blob/master/ILI9488.cpp
-    // uint8_t pos_gamma_ctrl[] = {0x00,
-    //                             0x03,
-    //                             0x09,
-    //                             0x08,
-    //                             0x16,
-    //                             0x0A,
-    //                             0x3F,
-    //                             0x78,
-    //                             0x4C,
-    //                             0x09,
-    //                             0x0A,
-    //                             0x08,
-    //                             0x16,
-    //                             0x1A,
-    //                             0x0F}
-    // ili9488_send_command(interface, ILI9488_POSITIVE_GAMMA_CONTROL, pos_gamma_ctrl, sizeof(pos_gamma_ctrl));
-    // uint8_t neg_gamma_ctrl[] = {0x00,
-    //                             0x16,
-    //                             0x19,
-    //                             0x03,
-    //                             0x0F,
-    //                             0x05,
-    //                             0x32,
-    //                             0x45,
-    //                             0x46,
-    //                             0x04,
-    //                             0x0E,
-    //                             0x0D,
-    //                             0x35,
-    //                             0x37,
-    //                             0x0F}
-    // ili9488_send_command(interface, ILI9488_NEGATIVE_GAMMA_CONTROL, neg_gamma_ctrl, sizeof(neg_gamma_ctrl));
 
-    ili9488_send_command(interface, ILI9488_POWER_CONTROL_1, 0x17, 
+    ili9488_send_command(ILI9488_POWER_CONTROL_1, 0x17, 
                                                             0x15);            //Power Control 1
     
-    ili9488_send_command(interface, ILI9488_POWER_CONTROL_2, 0x15);           //Power Control 2
+    ili9488_send_command(ILI9488_POWER_CONTROL_2, 0x15);           //Power Control 2
     
-    ili9488_send_command(interface, ILI9488_POWER_CONTROL_4, 0x00);           //Power Control 3
+    ili9488_send_command(ILI9488_POWER_CONTROL_4, 0x00);           //Power Control 3
     
-    ili9488_send_command(interface, ILI9488_MEMORY_ACCESS_CONTROL, 0x00);     //Memory Access
-    
-    ili9488_send_command(interface, ILI9488_INTERFACE_PIXEL_FORMAT, 0x61);    // Interface Pixel Format
-    
-    ili9488_send_command(interface, ILI9488_INTERFACE_MODE_CONTROL, 0x80);    // Interface Mode Control
-    
-    ili9488_send_command(interface, ILI9488_FRAME_RATE_CONTROL_IDLE, 0x00,    // No divide ratio for internal clocks
-                                                                     0x15);   // 21 Clocks
-    
-    ili9488_send_command(interface, ILI9488_DISPLAY_INVERSION_CONTROL, 0x02); // 2 dot inversion
+    ili9488_send_command(ILI9488_MEMORY_ACCESS_CONTROL, 0xA0);     //Memory Access:  d7    d6    d5    d4    d3    d2    d1  d0
+                                                                              //                MY    MX    MV    ML    BGR   MH    X   X
+                                                                              //                1     0     1     0     0     0     0   0
 
-    ili9488_send_command(interface, ILI9488_DISPLAY_FUNCTION_CONTROL, 0x00,   // DM: Internal System Clock, RM: System Interface, RCM: DE Mode, BYPASS: Memory, PTG: Normal Scan, PT: V63 (No idea what this means but pretty sure it is not used.)
+    ili9488_send_command(ILI9488_INTERFACE_PIXEL_FORMAT, 0x61);    // Interface Pixel Format
+
+    ili9488_send_command(ILI9488_INTERFACE_MODE_CONTROL, 0x80);    // Interface Mode Control
+
+    ili9488_send_command(ILI9488_FRAME_RATE_CONTROL_IDLE, 0x00,    // No divide ratio for internal clocks
+                                                                     0x15);   // 21 Clocks
+
+    ili9488_send_command(ILI9488_DISPLAY_INVERSION_CONTROL, 0x02); // 2 dot inversion
+
+    ili9488_send_command(ILI9488_DISPLAY_FUNCTION_CONTROL, 0x00,   // DM: Internal System Clock, RM: System Interface, RCM: DE Mode, BYPASS: Memory, PTG: Normal Scan, PT: V63 (No idea what this means but pretty sure it is not used.)
                                                                       0x0F,    // GS: 0, SS: 0, SM: 0, ISC: 31 Frames
                                                                       0x3b);  // NL: Drive all 480 Lines
-    
-    ili9488_send_command(interface, ILI9488_SET_IMAGE_FUNCTION, 0x00);        // Disable 24-Bit data Bus
-    
-    ili9488_send_command(interface, ILI9488_ADJUST_CONTROL_3, 0xa9, 
+
+    ili9488_send_command(ILI9488_SET_IMAGE_FUNCTION, 0x00);        // Disable 24-Bit data Bus
+
+    ili9488_send_command(ILI9488_ADJUST_CONTROL_3, 0xa9, 
                                                               0x51, 
                                                               0x2c, 
                                                               0x02);           // Adjust Control
-    
+
     // Sleep OUT (11h)
-    ili9488_send_command(interface, ILI9488_SLEEP_OUT);
+    ili9488_send_command(ILI9488_SLEEP_OUT);
     __delay_ms(120);
     // Display ON (29h)
-    ili9488_send_command(interface, ILI9488_DISPLAY_ON);
+    ili9488_send_command(ILI9488_DISPLAY_ON);
     __delay_ms(120);
-    ili9488_send_command(interface, ILI9488_IDLE_MODE_OFF);
+    ili9488_send_command(ILI9488_IDLE_MODE_OFF);
 
     return LCD;
 }
@@ -175,7 +144,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
 // void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 // {
 //     // Set X range
-//     ili9488_send_command(interface, ILI9488_PAGE_ADDRESS_SET, NULL, 0);
+//     ili9488_send_command(ILI9488_PAGE_ADDRESS_SET, NULL, 0);
     
 //     // Send X-axis start point to SPI buffer in 8-bit units
 //     ILI9488_SendByte(interface, x >> 8);
@@ -186,7 +155,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
 //     ILI9488_SendByte(interface, (x + w - 1) & 0xFF);
     
 //     // Set Y range
-//     ili9488_send_command(interface, 0x2A, NULL, 0);
+//     ili9488_send_command(0x2A, NULL, 0);
     
 //     // Send Y-axis start point to SPI buffer in 8-bit units
 //     ILI9488_SendByte(interface, y >> 8);
@@ -196,7 +165,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
 //     ILI9488_SendByte(interface, (y + h - 1) >> 8);
 //     ILI9488_SendByte(interface, (y + h - 1) & 0xFF);
     
-//     ili9488_send_command(interface, 0x2C, NULL, 0);
+//     ili9488_send_command(0x2C, NULL, 0);
 // }
 
 // Function name   : DMA_ILI9488_FillBackground

@@ -9,7 +9,7 @@
 // Arguments      : data -> Command to send (1 byte)
 // Return         : None
 // Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
-void ili9488_send_command(ili9488_interface_t interface, uint16_t len_cmd, ...)
+void ili9488_send_command(uint16_t len_cmd, ...)
 {
     uint8_t len = (len_cmd >> 8) & 0xff;
     uint8_t cmd = (len_cmd & 0xff);
@@ -75,7 +75,7 @@ void ili9488_send_command(ili9488_interface_t interface, uint16_t len_cmd, ...)
  * Return         : None
  * Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
  */
-void ili9488_send_data(ili9488_interface_t interface, uint8_t* pdata, size_t data_length)
+void ili9488_send_data(uint8_t* pdata, size_t data_length)
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
@@ -107,7 +107,7 @@ void ili9488_send_data(ili9488_interface_t interface, uint8_t* pdata, size_t dat
  * Return         : None
  * Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
  */
-void ili9488_send_byte(ili9488_interface_t interface, uint8_t data)
+void ili9488_send_byte(uint8_t data)
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
@@ -140,7 +140,7 @@ void ili9488_send_byte(ili9488_interface_t interface, uint8_t data)
 //
 // Return         : None (internal process handles reception if needed)
 // Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
-void ili9488_transfer_data(ili9488_interface_t interface, uint8_t* tx_data, uint8_t* rx_data, size_t len)
+void ili9488_transfer_datauint8_t* tx_data, uint8_t* rx_data, size_t len)
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
@@ -165,7 +165,7 @@ void ili9488_transfer_data(ili9488_interface_t interface, uint8_t* tx_data, uint
 
 }
 
-void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen, uint24_t len)
+void ili9488_read_data(uint8_t* data_from_screen, uint24_t len)
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
@@ -191,22 +191,22 @@ void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen,
 /**
  * 
  */
-void ili9488_set_ram_pointer(ili9488_interface_t inter, Ili9488RamPointer args) 
+void ili9488_set_ram_pointer(Ili9488RamPointer args) 
 {
     uint8_t start_msb = (args.start_y >> 8) & 0xff;
     uint8_t start_lsb = (args.start_y & 0xff);
     uint8_t end_msb   = (args.end_y >> 8) & 0xff;
     uint8_t end_lsb   = (args.end_y & 0xff);
-    ili9488_send_command(inter, ILI9488_COLUMN_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
+    ili9488_send_command(ILI9488_COLUMN_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 
     start_msb = (args.start_x >> 8) & 0xff;
     start_lsb = (args.start_x & 0xff);
     end_msb   = (args.end_x >> 8) & 0xff;
     end_lsb   = (args.end_x & 0xff);
-    ili9488_send_command(inter, ILI9488_PAGE_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
+    ili9488_send_command(ILI9488_PAGE_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 }
 
-void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, uint24_t len)
+void ili9488_gram_write(uint8_t * pbuf, uint24_t len)
 {
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();
@@ -232,7 +232,7 @@ void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, uint24_t len)
 
 }
 
-void ili9488_gram_write_continue(ili9488_interface_t inter, uint8_t * pbuf, uint24_t len)
+void ili9488_gram_write_continue(uint8_t * pbuf, uint24_t len)
 {
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();

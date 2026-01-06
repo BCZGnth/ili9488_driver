@@ -235,7 +235,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
      * Load the data_to_write buffer with the character from our variable
      * Use snprintf because it allows overwrite protection that always ends in a null terminator
      */
-    number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%d", args.data); // putting zeros at the end of the string so that it is less noise to the viewer
+    number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args.data); // putting zeros at the end of the string so that it is less noise to the viewer
     if(number_of_chars_written <= 0) {
         level_log(ERROR, "snprintf call did not write data to a buffer. Possibly you have a bad args.data");
     }
@@ -316,8 +316,8 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     Ili9488RamPointer char_placement;
     // Glyph char_attrs = {
     //     .character = '\0',
-    //     .height = char_bit_height_1x,
-    //     .width = char_bit_width_1x,
+    //     .height = char_bit_height_2x,
+    //     .width = char_bit_width_2x,
     // };
 
     /* Error Checks */
@@ -415,6 +415,14 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
                 xoff = 0;
                 row_increment += 1;
             }
+
+        } else if(msg_char == '\n') {
+            row_increment += 1;
+            xoff = 0;
+
+            /* Increment past the newline character, so that we write the next character after it. */
+            msg_letter++;
+            msg_char = *(msg_letter);
         }
 
         yoff = ((char_height + char_pad) * row_increment);
@@ -427,6 +435,10 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             // }
             // Constrain char_height to only go to the bottom of the box
             // The unfortunate problem with this solution is that it does not allow for the correct pixels to be written at the correct places in the smaller box
+            
+            /* We are just going to break here instead of trying to display gibbborish on the screen it makes more sense this way */
+            break;
+            
             write_height = (uint8_t)(box_height - yoff);
             last_line_flag = true;
         }

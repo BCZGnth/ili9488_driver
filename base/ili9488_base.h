@@ -15,18 +15,6 @@ typedef unsigned char color_t;
  * 
  */
 typedef struct ILI9488_INTERFACE {
-    uint8_t * spi_miso_port;
-    uint8_t * spi_mosi_port;
-    uint8_t * spi_dc_port;
-    uint8_t * spi_cs_port;
-    uint8_t * spi_clock_port;
-    
-    uint8_t   spi_miso_pin;
-    uint8_t   spi_mosi_pin;
-    uint8_t   spi_dc_pin;
-    uint8_t   spi_cs_pin;
-    uint8_t   spi_clock_pin;
-
     uint8_t * lcd_rst_port;
     uint8_t   lcd_rst_pin;
 

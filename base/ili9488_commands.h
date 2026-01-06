@@ -146,24 +146,24 @@ const uint16_t ILI9488_ADJUST_CONTROL_7             = 0x2FF;
 
 
 // Send command to ILI9488 (received value is ignored)
-void ili9488_send_command(ili9488_interface_t interface, uint16_t cmd, ...);
+void ili9488_send_command(uint16_t cmd, ...);
 
 // Send data to ILI9488 (received value is ignored)
-void ili9488_send_data(ili9488_interface_t interface, uint8_t* pdata, size_t data_length);
+void ili9488_send_data(uint8_t* pdata, size_t data_length);
 
 // Send single byte to ILI9488 (received value is ignored)
-void ili9488_send_byte(ili9488_interface_t interface, uint8_t data);
+void ili9488_send_byte(uint8_t data);
 
 // Send/receive data to/from ILI9488
-void ili9488_transfer_data(ili9488_interface_t interface, uint8_t* tx_data, uint8_t* rx_data, size_t len);
+void ili9488_transfer_data(uint8_t* tx_data, uint8_t* rx_data, size_t len);
 
-void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen, uint24_t len);
+void ili9488_read_data(uint8_t* data_from_screen, uint24_t len);
 
-void ili9488_set_ram_pointer(ili9488_interface_t inter, Ili9488RamPointer args);
+void ili9488_set_ram_pointer(Ili9488RamPointer args);
 
-void ili9488_gram_write(ili9488_interface_t inter, uint8_t * pbuf, uint24_t len);
+void ili9488_gram_write(uint8_t * pbuf, uint24_t len);
 
-void ili9488_gram_write_continue(ili9488_interface_t inter, uint8_t * pbuf, uint24_t len);
+void ili9488_gram_write_continue(uint8_t * pbuf, uint24_t len);
 
 
 #endif
