@@ -124,12 +124,12 @@ void ili9488_fill_color(Ili9488Defines screen, Ili9488FillBlock args)
     uint24_t remainder = total_block_bytes % (uint24_t)screen.Screen.buffer_size;
 
     // Log debug information
-    level_log(TRACE, "Fill length is: %d", screen.Screen.buffer_size);
-    level_log(TRACE, "Block Width: %d", block_width);
-    level_log(TRACE, "Block Height: %d", block_height);
-    level_log(TRACE, "Total Block Bytes: %d", total_block_bytes);
-    level_log(TRACE, "Number of Iterations: %d", iterations);
-    level_log(TRACE, "Remainder Bytes: %d", remainder);
+    level_log(TRACE, "Fill length is: %u", screen.Screen.buffer_size);
+    level_log(TRACE, "Block Width: %lu", block_width);
+    level_log(TRACE, "Block Height: %lu", block_height);
+    level_log(TRACE, "Total Block Bytes: %lu", total_block_bytes);
+    level_log(TRACE, "Number of Iterations: %lu", iterations);
+    level_log(TRACE, "Remainder Bytes: %lu", remainder);
     
     // Initialize the buffer with zeros (clear screen data)
     memset(screen.Screen.pbuffer, color, screen.Screen.buffer_size);
@@ -450,7 +450,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         char_placement.start_y    = args.ram_ptr.start_y + yoff;
         char_placement.end_x   = char_placement.start_x + write_width - 1  /*- 1 To maintain Zero Indexing */;
         char_placement.end_y      = char_placement.start_y + write_height - 1 /*- 1 To Maintain Zero Indexing */;
-        printf("Char x = %d, Char y = %d, xoff = %d, yoff = %d", char_placement.start_x, char_placement.start_y, xoff, yoff);
+        printf("Char x = %u, Char y = %u, xoff = %u, yoff = %u", char_placement.start_x, char_placement.start_y, xoff, yoff);
         ili9488_set_ram_pointer(char_placement);
 
         // char_attrs.character = msg_char;
