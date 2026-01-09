@@ -71,7 +71,8 @@ void h2o_outline(Ili9488Defines screen) {
             .start_y = (screen.Screen.ScreenHeight / 4),
             .end_y = (screen.Screen.ScreenHeight / 4) + screen.Screen.offset_2x.height
         },
-        .fg = YELLOW
+        .fg = YELLOW,
+        .font = screen.Screen.offset_2x,
     };
 
     Ili9488Rect full_outline = {
@@ -107,23 +108,42 @@ void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
     /* Print Serial number */
     Ili9488WriteNumber ser_val = {
         .constrained_length = 6,
-        .data = serial_number,
+        .data = (int32_t)serial_number,
         .ram_ptr = {
             .start_x = ((screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2) + 10 * screen.Screen.offset_2x.width_pad + 1,
             .end_x =   ((screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2) + 20 * screen.Screen.offset_2x.width_pad + 1,
-            .start_y = 6,
-            .end_y = 6 + screen.Screen.character.height
+            .start_y = 4,
+            .end_y = 4 + screen.Screen.character.height
         },
         // .scale = 1,
         .fg = RED,
         .font = screen.Screen.offset_2x
     };
 
+    Ili9488HVLine serial_underline = {
+        .color = WHITE,
+        .length = screen.Screen.ScreenWidth - 1,
+        .xstart = 0,
+        .ystart = 22,
+        .weight = 2,
+    };
+
+    Ili9488Rect white_border = {
+        .color = WHITE,
+        .weight = 3,
+        .xstart = 0,
+        .ystart = 0,
+        .xend = screen.Screen.ScreenWidth - 1,
+        .yend = screen.Screen.ScreenHeight - 1,
+    };
+
+    ili9488_draw_hline(  screen, serial_underline);
+    ili9488_draw_rect(   screen, white_border);
     ili9488_print(       screen, ser_num);
     ili9488_write_number(screen, ser_val);
 }
 
-void pretty_payload_frame(Ili9488Defines screen, uint32_t serial_number)
+void pretty_payload_frame(Ili9488Defines screen, uint24_t serial_number)
 {
 
 
@@ -153,7 +173,7 @@ void pretty_payload_frame(Ili9488Defines screen, uint32_t serial_number)
     /* Print Serial number */
     Ili9488WriteNumber ser_val = {
         .constrained_length = 6,
-        .data = serial_number,
+        .data = (int32_t)serial_number,
         .ram_ptr = {
             .start_x = 0,
             .start_y = 0,

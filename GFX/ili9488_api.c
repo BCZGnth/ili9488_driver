@@ -124,12 +124,18 @@ void ili9488_fill_color(Ili9488Defines screen, Ili9488FillBlock args)
     uint24_t remainder = total_block_bytes % (uint24_t)screen.Screen.buffer_size;
 
     // Log debug information
-    level_log(TRACE, "Fill length is: %u", screen.Screen.buffer_size);
-    level_log(TRACE, "Block Width: %lu", block_width);
-    level_log(TRACE, "Block Height: %lu", block_height);
-    level_log(TRACE, "Total Block Bytes: %lu", total_block_bytes);
-    level_log(TRACE, "Number of Iterations: %lu", iterations);
-    level_log(TRACE, "Remainder Bytes: %lu", remainder);
+    level_log(TRACE, "Fill length is:");
+    printf("%u", screen.Screen.buffer_size);
+    level_log(TRACE, "Block Width:");
+    printf("%lu", (uint32_t)block_width);
+    level_log(TRACE, "Block Height:");
+    printf("%lu", (uint32_t)block_height);
+    level_log(TRACE, "Total Block Bytes:");
+    printf("%lu", (uint32_t)total_block_bytes);
+    level_log(TRACE, "Number of Iterations:");
+    printf("%lu", (uint32_t)iterations);
+    level_log(TRACE, "Remainder Bytes:");
+    printf("%lu", (uint32_t)remainder);
     
     // Initialize the buffer with zeros (clear screen data)
     memset(screen.Screen.pbuffer, color, screen.Screen.buffer_size);
@@ -210,8 +216,8 @@ print at one time.
 size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
 
     ADD_TO_STACK_DEPTH(); // ili9488_write_number
-    level_log(TRACE, "Writing Number: %d", args.data);
-
+    level_log(TRACE, "Writing Number:");
+    printf("%ld or %lu", args.data, args.data);
     /** 
      * Don't be fooled by the term "constrained length" This is just a parameter that is used to right align the text since the buffer gets written left to right. 
      */
@@ -242,10 +248,11 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
 
     uint8_t right_align_pixel_offset = (args.constrained_length - number_of_chars_written) * write_num_off.width_pad;
     if(args.constrained_length < number_of_chars_written) {
-        level_log(WARNING, "constrained length smaller than chars written. Setting Right align character offset to ZERO to eliminate memory corruption possibilities");
+        level_log(WARNING, "Constrained length smaller than chars written." /*Setting Right align character offset to ZERO to eliminate memory corruption possibilities"*/ );
         right_align_pixel_offset = 0;
     }
-    level_log(TRACE, "Right-align offset is %d", right_align_pixel_offset);
+    level_log(TRACE, "Right-align offset is:");
+    printf("%d", right_align_pixel_offset);
 
     /**
      * The constraint should just be 10 chars since that is the max. This makes the code easier for the user, but potentiall harder here
@@ -255,16 +262,19 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
      * 3) send the string and its ram_pointer to the print function.
      */
     Ili9488Print num_to_print = {
-        .text    = &data_to_write[0],
-        .fg      = args.fg,
-        .ram_ptr = args.ram_ptr,
+        .text         = &data_to_write[0],
+        .fg           = args.fg,
+        .ram_ptr      = args.ram_ptr,
         .line_spacing = 0,
-        .font = args.font,
-    };
+        .font         = args.font,
+    }; 
 
-    if( num_to_print.ram_ptr.start_x + right_align_pixel_offset > write_num_off.width_pad) {
-        num_to_print.ram_ptr.start_x += right_align_pixel_offset;
-    }
+    // if( num_to_print.ram_ptr.start_x + right_align_pixel_offset > write_num_off.width_pad) {
+    //     num_to_print.ram_ptr.start_x += right_align_pixel_offset;
+    // }
+    // if(num_to_print.ram_ptr.start_x + right_align_pixel_offset - 1 < num_to_print.ram_ptr.end_x && num_to_print.ram_ptr.end_x - num_to_print.ram_ptr.start_x - right_align_pixel_offset >= number_of_chars_written * write_num_off.width_pad ) {
+    //     num_to_print.ram_ptr.start_x += right_align_pixel_offset;
+    // }
 
     ili9488_print(screen, num_to_print);
 
@@ -285,7 +295,10 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
 size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
 
     ADD_TO_STACK_DEPTH(); // ili9488_print    
-    level_log(TRACE, "Printing: \"%s\"", args.text);
+    level_log(TRACE, "Printing:");
+    printf("\"%s\"", args.text);
+    level_log(TRACE, "Foreground Color:");
+    printf("0x%x", args.fg);
 
     /* Lock the background black */
     args.bg = BLACK;
@@ -404,7 +417,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             word_search_str = msg_letter;
             /* Initially increment the word_search_string so that it does not start on a space thus voiding the entire while loop */
             word_search_str++;
-            while(*word_search_str != ' ' && *word_search_str != '\0') {
+            while(*word_search_str != ' ' && *word_search_str != '\0' && *word_search_str != '\n') {
                 word_length++;
                 word_search_str++;
             }
@@ -484,6 +497,24 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     return (chars_written * screen.Screen.character.width_pad);
 }
 
+void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t c) {
+    ADD_TO_STACK_DEPTH();
+    printf("Drawing a pixel at (%u, %u) with color %b", x, y, c);
+
+    Ili9488RamPointer ptr = {
+        .start_x = x,
+        .end_x = x,
+        .start_y = y,
+        .end_y = y,
+    };
+
+    ili9488_set_ram_pointer(ptr);
+
+    ili9488_gram_write(&c, 1);
+
+    level_log(TRACE, "Drew Pixel");
+    REMOVE_FROM_STACK_DEPTH();
+}
 
 void ili9488_cls(Ili9488Defines screen)
 {
@@ -509,12 +540,18 @@ void ili9488_cls(Ili9488Defines screen)
     uint32_t remainder = total_screen_bytes % (uint32_t)screen.Screen.buffer_size;
 
     // Log debug information
-    level_log(TRACE, "Clear Length is: %d", screen.Screen.buffer_size);
-    level_log(TRACE, "Screen Width: %d", screen.Screen.ScreenWidth);
-    level_log(TRACE, "Screen Height: %d", screen.Screen.ScreenHeight);
-    level_log(TRACE, "Total Screen Bytes: %d", total_screen_bytes);
-    level_log(TRACE, "Number of Iterations: %d", iterations);
-    level_log(TRACE, "Remainder Bytes: %d", remainder);
+    level_log(TRACE, "Clear Length is:");
+    printf("%u", screen.Screen.buffer_size);
+    level_log(TRACE, "Screen Width:");
+    printf("%u", screen.Screen.ScreenWidth);
+    level_log(TRACE, "Screen Height:");
+    printf("%u", screen.Screen.ScreenHeight);
+    level_log(TRACE, "Total Screen Bytes:");
+    printf("%lu", total_screen_bytes);
+    level_log(TRACE, "Number of Iterations:");
+    printf("%lu", iterations);
+    level_log(TRACE, "Remainder Bytes:");
+    printf("%lu", remainder);
     
     // Initialize the buffer with zeros (clear screen data)
     memset(screen.Screen.pbuffer, 0, screen.Screen.buffer_size);
