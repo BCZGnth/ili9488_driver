@@ -430,6 +430,9 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             if( word_length > box_width - xoff ) {
                 xoff = 0;
                 row_increment += 1;
+                msg_letter++;
+                msg_char = *(msg_letter);
+                continue;
             }
 
         } else if(msg_char == '\n') {
