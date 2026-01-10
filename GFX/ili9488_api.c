@@ -63,28 +63,29 @@ size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, u
     {
         uint8_t glyph_bits = *( font_offset.pfont + (index * font_offset.bytes_per_char + glyph_byte) );
 
-        for (uint8_t pixel = 8; pixel > 0; pixel--)
+        for (uint8_t pixel = 0; pixel < 8; pixel++)
         {
-            uint8_t bit   = (glyph_bits >> (8 - pixel)) & 1;
+            uint8_t bit   = (glyph_bits >> (7 - pixel)) & 1;
 
             uint8_t color = bit ? fg : bg;
 
             if ((out_pixel & 1) == 0)
-                *(pbuf + byte_index) = (color & 0x07) << 3;     // Pushing the n pixel to bits 5:3  
+                pbuf[byte_index] = (color & 0x07) << 3;     // Pushing the n pixel to bits 5:3  
                                                                 // Set equal to clear the previous data from this byte address.
             else
-                *(pbuf + byte_index) |= (color & 0x07);         // Keeping the n + 1 pixel in bits 2:0 
+                pbuf[byte_index] |= (color & 0x07);         // Keeping the n + 1 pixel in bits 2:0 
                                                                 // See datasheet section 4.7.2.1 for more information
 
             out_pixel++;
             byte_index = out_pixel / 2;
-            if (byte_index > len) break;
+            if (byte_index >= len) break;
         }
         
         if (byte_index >= len) break;
+        if (out_pixel > pixel_count) break;
     }
 
-    return byte_index;
+    return pixel_count / 2;
 }
 
 
@@ -225,7 +226,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
     #define MAX_NUMBER_OF_CHARS 10
     uint8_t n, number_of_chars_written; // the snprintf function actually returns an integer value, but I hope that the amount of characters will never exceed 255...
     unsigned char data_to_write[MAX_NUMBER_OF_CHARS]; // Don't really need to display numbers that are longer than 24 characters
-    FontOffset write_num_off = screen.Screen.offset_2x;
+    FontOffset write_num_off = args.font;
     // ili9488_set_ram_pointer(screen.interface, args.ram_ptr);
     
     // Hopefully won't ever need this...
@@ -247,7 +248,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
     }
 
     uint8_t right_align_pixel_offset = (args.constrained_length - number_of_chars_written) * write_num_off.width_pad;
-    if(args.constrained_length < number_of_chars_written) {
+    if(number_of_chars_written > args.constrained_length) {
         level_log(WARNING, "Constrained length smaller than chars written." /*Setting Right align character offset to ZERO to eliminate memory corruption possibilities"*/ );
         right_align_pixel_offset = 0;
     }
@@ -268,6 +269,8 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
         .line_spacing = 0,
         .font         = args.font,
     }; 
+
+    num_to_print.ram_ptr.start_x = args.ram_ptr.start_x + right_align_pixel_offset;
 
     // if( num_to_print.ram_ptr.start_x + right_align_pixel_offset > write_num_off.width_pad) {
     //     num_to_print.ram_ptr.start_x += right_align_pixel_offset;
@@ -401,8 +404,6 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
          *  3) convert the word length to pixel length and compare to screen width left in row
          *  4) reset xoff and increment row_increment
          */
-        
-        xoff += (write_width + char_pad);
         if(xoff + write_width + 1 > box_width) {
             // Add one to account for a zero indexed column/row arrangement. If a box is 8 rows tall in the top left corner, rows 0 - 7 will be taken up. Thus row 8 will be the ninth row
             // Reset xoff and intcrement row counter
@@ -486,6 +487,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         msg_letter++;
         msg_char = *(msg_letter);
         chars_written++;
+        xoff += (write_width + char_pad);
 
         // printf("MSG Pointer: %p - MSG Char: %c - Chars Written: %d\n", msg_letter, msg_char, chars_written);
     }

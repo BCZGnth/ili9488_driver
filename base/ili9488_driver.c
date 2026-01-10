@@ -73,6 +73,14 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
                 .width_pad = char_bit_width_2x + 2,
                 .bytes_per_char = 20
             },
+            .offset_10x7 = {
+                .ascii = 32, // We only have the characters from 32 to 127. Thus the offset is 32
+                .pfont = &(ascii_10x7[0]),
+                .height = font_10x7_bit_height,
+                .width = font_10x7_bit_width,
+                .width_pad = font_10x7_bit_width + 2,
+                .bytes_per_char = 9
+            },
             .ScreenHeight = 480,
             .ScreenWidth = 320,
             .zeroed_ram_ptr = {

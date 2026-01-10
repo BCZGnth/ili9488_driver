@@ -207,6 +207,7 @@ typedef struct ScreenMetaData{
 
     FontOffset offset_1x;
     FontOffset offset_2x;
+    FontOffset offset_10x7;
 
     CharAttributes character;
 } ScreenDefines;
