@@ -247,9 +247,9 @@ void ili9488_loading_bar(Ili9488Defines screen) {
     loading_bar.ystart = screen.Screen.ScreenHeight - 5;
 
     /* Could implement some waiting visualization function here */
-    loading_bar.length += 5;
-    loading_bar.xstart += 5;
-    if(loading_bar.xstart + loading_bar.length > screen.Screen.ScreenWidth - 10) {
+    loading_bar.length += 2;
+    loading_bar.xstart += 2;
+    if(loading_bar.xstart + loading_bar.length > screen.Screen.ScreenWidth - 5) {
         loading_bar.length = 5;
         loading_bar.xstart = 4;
         if(loading_bar.color) {
