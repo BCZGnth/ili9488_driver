@@ -239,7 +239,7 @@ void ili9488_loading_bar(Ili9488Defines screen) {
     
     static Ili9488HVLine loading_bar = {
         .color = CYAN,
-        .ystart = 316,
+        // .ystart = 316,
         .length = 5,
         .weight = 5,
     };
