@@ -240,17 +240,17 @@ void ili9488_loading_bar(Ili9488Defines screen) {
     static Ili9488HVLine loading_bar = {
         .color = CYAN,
         // .ystart = 316,
-        .length = 5,
+        .length = 4,
         .weight = 5,
     };
 
     loading_bar.ystart = screen.Screen.ScreenHeight - 5;
 
     /* Could implement some waiting visualization function here */
-    loading_bar.length += 2;
-    loading_bar.xstart += 2;
+    // loading_bar.length += 2;
+    loading_bar.xstart += 4;
     if(loading_bar.xstart + loading_bar.length > screen.Screen.ScreenWidth - 5) {
-        loading_bar.length = 5;
+        // loading_bar.length = 5;
         loading_bar.xstart = 4;
         if(loading_bar.color) {
             loading_bar.color = BLACK;
