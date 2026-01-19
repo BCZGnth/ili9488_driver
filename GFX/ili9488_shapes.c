@@ -234,6 +234,167 @@ void ili9488_draw_rect(Ili9488Defines screen, Ili9488Rect Rect){
     REMOVE_FROM_STACK_DEPTH();
 }
 
+/* Circle Functions Taken from the Adafruit GFX library 
+ * Link: https://github.com/adafruit/Adafruit-GFX-Library/blob/master/Adafruit_GFX.cpp */
+
+/**************************************************************************/
+/*!
+   @brief    Draw a circle outline
+    @param    x0   Center-point x coordinate
+    @param    circ.ystart   Center-point y coordinate
+    @param    r   Radius of circle
+    @param    color 3-bit 1-1-1 Color to draw with
+*/
+/**************************************************************************/
+void ili9488_draw_circle(Ili9488Circle circ) {
+
+    int16_t f = 1 - r;
+    int16_t ddF_x = 1;
+    int16_t ddF_y = -2 * r;
+    int16_t x = 0;
+    int16_t y = r;
+  
+    ili9488_draw_pixel(circ.xstart,     circ.ystart + r, circ.color);
+    ili9488_draw_pixel(circ.xstart,     circ.ystart - r, circ.color);
+    ili9488_draw_pixel(circ.xstart + r, circ.ystart,     circ.color);
+    ili9488_draw_pixel(circ.xstart - r, circ.ystart,     circ.color);
+
+    while (x < y) {
+        if (f >= 0) {
+          y--;
+          ddF_y += 2;
+          f += ddF_y;
+        }
+        x++;
+        ddF_x += 2;
+        f += ddF_x;
+
+        ili9488_draw_pixel(circ.xstart + x, circ.ystart + y, circ.color);
+        ili9488_draw_pixel(circ.xstart - x, circ.ystart + y, circ.color);
+        ili9488_draw_pixel(circ.xstart + x, circ.ystart - y, circ.color);
+        ili9488_draw_pixel(circ.xstart - x, circ.ystart - y, circ.color);
+        ili9488_draw_pixel(circ.xstart + y, circ.ystart + x, circ.color);
+        ili9488_draw_pixel(circ.xstart - y, circ.ystart + x, circ.color);
+        ili9488_draw_pixel(circ.xstart + y, circ.ystart - x, circ.color);
+        ili9488_draw_pixel(circ.xstart - y, circ.ystart - x, circ.color);
+    }
+}
+
+// /**************************************************************************/
+// /*!
+//     @brief    Quarter-circle drawer, used to do circles and roundrects
+//     @param    x0   Center-point x coordinate
+//     @param    y0   Center-point y coordinate
+//     @param    r   Radius of circle
+//     @param    cornername  Mask bit #1, #2, #4, and #8 to indicate which quarters
+//               of the circle we're doing
+//     @param    color 16-bit 5-6-5 Color to draw with
+// */
+// /**************************************************************************/
+// void Adafruit_GFX::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
+//                                     uint8_t cornername, uint16_t color) {
+//   int16_t f = 1 - r;
+//   int16_t ddF_x = 1;
+//   int16_t ddF_y = -2 * r;
+//   int16_t x = 0;
+//   int16_t y = r;
+
+//   while (x < y) {
+//     if (f >= 0) {
+//       y--;
+//       ddF_y += 2;
+//       f += ddF_y;
+//     }
+//     x++;
+//     ddF_x += 2;
+//     f += ddF_x;
+//     if (cornername & 0x4) {
+//       ili9488_draw_pixel(x0 + x, y0 + y, color);
+//       ili9488_draw_pixel(x0 + y, y0 + x, color);
+//     }
+//     if (cornername & 0x2) {
+//       ili9488_draw_pixel(x0 + x, y0 - y, color);
+//       ili9488_draw_pixel(x0 + y, y0 - x, color);
+//     }
+//     if (cornername & 0x8) {
+//       ili9488_draw_pixel(x0 - y, y0 + x, color);
+//       ili9488_draw_pixel(x0 - x, y0 + y, color);
+//     }
+//     if (cornername & 0x1) {
+//       ili9488_draw_pixel(x0 - y, y0 - x, color);
+//       ili9488_draw_pixel(x0 - x, y0 - y, color);
+//     }
+//   }
+// }
+
+// /**************************************************************************/
+// /*!
+//    @brief    Draw a circle with filled color
+//     @param    x0   Center-point x coordinate
+//     @param    y0   Center-point y coordinate
+//     @param    r   Radius of circle
+//     @param    color 16-bit 5-6-5 Color to fill with
+// */
+// /**************************************************************************/
+// void il9488_fill_circle(int16_t x0, int16_t y0, int16_t r, color_t color) {
+//     ili9488_draw_vline(x0, y0 - r, 2 * r + 1, color);
+//     fillCircleHelper(x0, y0, r, 3, 0, color);
+// }
+
+// /**************************************************************************/
+// /*!
+//     @brief  Half-circle drawer with fill, used for circles and roundrects
+//     @param  x0       Center-point x coordinate
+//     @param  y0       Center-point y coordinate
+//     @param  r        Radius of circle
+//     @param  corners  Mask bits indicating which sides of the circle we are
+//                      doing, left (1) and/or right (2)
+//     @param  delta    Offset from center-point, used for round-rects
+//     @param  color    16-bit 5-6-5 Color to fill with
+// */
+// /**************************************************************************/
+// void Adafruit_GFX::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
+//                                     uint8_t corners, int16_t delta,
+//                                     uint16_t color) {
+
+//   int16_t f = 1 - r;
+//   int16_t ddF_x = 1;
+//   int16_t ddF_y = -2 * r;
+//   int16_t x = 0;
+//   int16_t y = r;
+//   int16_t px = x;
+//   int16_t py = y;
+
+//   delta++; // Avoid some +1's in the loop
+
+//   while (x < y) {
+//     if (f >= 0) {
+//       y--;
+//       ddF_y += 2;
+//       f += ddF_y;
+//     }
+//     x++;
+//     ddF_x += 2;
+//     f += ddF_x;
+//     // These checks avoid double-drawing certain lines, important
+//     // for the SSD1306 library which has an INVERT drawing mode.
+//     if (x < (y + 1)) {
+//       if (corners & 1)
+//         writeFastVLine(x0 + x, y0 - y, 2 * y + delta, color);
+//       if (corners & 2)
+//         writeFastVLine(x0 - x, y0 - y, 2 * y + delta, color);
+//     }
+//     if (y != py) {
+//       if (corners & 1)
+//         writeFastVLine(x0 + py, y0 - px, 2 * px + delta, color);
+//       if (corners & 2)
+//         writeFastVLine(x0 - py, y0 - px, 2 * px + delta, color);
+//       py = y;
+//     }
+//     px = x;
+//   }
+// }
+
 
 void ili9488_loading_bar(Ili9488Defines screen) {
     
