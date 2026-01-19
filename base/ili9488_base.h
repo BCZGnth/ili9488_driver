@@ -7,6 +7,16 @@
 
 #include "system.h" 
 
+/* 3-bit RGB color definitions (B:G:R) */
+#define BLACK   0b000  /* B=0, G=0, R=0 */
+#define RED     0b001  /* B=0, G=0, R=1 */
+#define GREEN   0b010  /* B=0, G=1, R=0 */
+#define YELLOW  0b011  /* B=0, G=1, R=1 */
+#define BLUE    0b100  /* B=1, G=0, R=0 */
+#define MAGENTA 0b101  /* B=1, G=0, R=1 */
+#define CYAN    0b110  /* B=1, G=1, R=0 */
+#define WHITE   0b111  /* B=1, G=1, R=1 */
+
 typedef unsigned char color_t;
 
 #define SOFTWARE_SPI
