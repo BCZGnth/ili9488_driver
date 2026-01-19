@@ -765,3 +765,15 @@ void ili9488_clear_block(Ili9488Defines screen, Ili9488RamPointer args)
 //     REMOVE_FROM_STACK_DEPTH();
 //     return;
 // }
+
+void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t color) {
+
+    ili9488_set_ram_pointer( (Ili9488RamPointer){
+                                                    .start_x = x,
+                                                    .end_x = x,
+                                                    .start_y = y,
+                                                    .end_y = y,
+                                                })
+
+    ili9488_gram_write(&color, 1);
+}

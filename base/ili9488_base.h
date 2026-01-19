@@ -166,6 +166,11 @@ typedef struct WaitAnimate{
     uint8_t three_ctr;
 } Ili9488Wait;
 
+
+/** 
+ * Ili9488 Shapes
+ *  */
+
 typedef struct HVLine{
     uint16_t xstart;
     uint16_t ystart;
@@ -182,6 +187,15 @@ typedef struct Rect{
     uint16_t weight;
     color_t color;
 } Ili9488Rect;
+
+typedef struct Circle {
+    uint16_t x;
+    uint16_t y;
+
+    uint8_t r;
+    uint8_t weight;
+    color_t color;
+} Ili9488Circle;
 
 
 /* 
