@@ -18,7 +18,7 @@ void ili9488_clear_block(        Ili9488Defines screen,     Ili9488RamPointer ar
 // void   ili9488_clear_line(        ScreenDefines Screen,     Ili9488Clear       args);
 // void   ili9488_clear_word(        ScreenDefines Screen,     Ili9488Clear       args);
 size_t ili9488_print(            Ili9488Defines screen,     Ili9488Print       args);
-void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t c);
+void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t color, uint8_t debug_flag);
 // void   ili9488_blinking_cursor(   ScreenDefines Screen,     Ili9488Cursor      args);
 // void   ili9488_waiting(        ScreenDefines Screen);
 

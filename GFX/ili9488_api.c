@@ -512,24 +512,6 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     return (chars_written * screen.Screen.character.width_pad);
 }
 
-void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t c) {
-    ADD_TO_STACK_DEPTH();
-    // printf("Drawing a pixel at (%u, %u) with color %b", x, y, c);
-
-    Ili9488RamPointer ptr = {
-        .start_x = x,
-        .end_x = x,
-        .start_y = y,
-        .end_y = y,
-    };
-
-    ili9488_set_ram_pointer(ptr);
-
-    ili9488_gram_write(&c, 1);
-
-    // level_log(TRACE, "Drew Pixel");
-    REMOVE_FROM_STACK_DEPTH();
-}
 
 void ili9488_cls(Ili9488Defines screen)
 {
@@ -766,14 +748,40 @@ void ili9488_clear_block(Ili9488Defines screen, Ili9488RamPointer args)
 //     return;
 // }
 
-void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t color) {
+void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t color, uint8_t debug_flag) {
 
     ili9488_set_ram_pointer( (Ili9488RamPointer){
                                                     .start_x = x,
                                                     .end_x = x,
                                                     .start_y = y,
                                                     .end_y = y,
-                                                })
+                                                });
+    
+    if(debug_flag) {
+        uint8_t lots_of_color[5];
+        memset(&lots_of_color, color, sizeof(lots_of_color));
+        ili9488_gram_write(&lots_of_color, sizeof(lots_of_color));
+    } else {
+        ili9488_gram_write(&color, 1);
+    }
 
-    ili9488_gram_write(&color, 1);
 }
+
+// void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t c) {
+//     ADD_TO_STACK_DEPTH();
+//     // printf("Drawing a pixel at (%u, %u) with color %b", x, y, c);
+
+//     Ili9488RamPointer ptr = {
+//         .start_x = x,
+//         .end_x = x,
+//         .start_y = y,
+//         .end_y = y,
+//     };
+
+//     ili9488_set_ram_pointer(ptr);
+
+//     ili9488_gram_write(&c, 1);
+
+//     // level_log(TRACE, "Drew Pixel");
+//     REMOVE_FROM_STACK_DEPTH();
+// }

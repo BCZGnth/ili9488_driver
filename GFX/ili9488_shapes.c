@@ -248,16 +248,16 @@ void ili9488_draw_rect(Ili9488Defines screen, Ili9488Rect Rect){
 /**************************************************************************/
 void ili9488_draw_circle(Ili9488Circle circ) {
 
-    int16_t f = 1 - r;
+    int16_t f = 1 - circ.r;
     int16_t ddF_x = 1;
-    int16_t ddF_y = -2 * r;
+    int16_t ddF_y = -2 * circ.r;
     int16_t x = 0;
-    int16_t y = r;
+    int16_t y = circ.r;
   
-    ili9488_draw_pixel(circ.xstart,     circ.ystart + r, circ.color);
-    ili9488_draw_pixel(circ.xstart,     circ.ystart - r, circ.color);
-    ili9488_draw_pixel(circ.xstart + r, circ.ystart,     circ.color);
-    ili9488_draw_pixel(circ.xstart - r, circ.ystart,     circ.color);
+    ili9488_draw_pixel(circ.x,          circ.y + circ.r, circ.color, 1);
+    ili9488_draw_pixel(circ.x,          circ.y - circ.r, circ.color, 1);
+    ili9488_draw_pixel(circ.x + circ.r, circ.y,          circ.color, 1);
+    ili9488_draw_pixel(circ.x - circ.r, circ.y,          circ.color, 1);
 
     while (x < y) {
         if (f >= 0) {
@@ -269,14 +269,14 @@ void ili9488_draw_circle(Ili9488Circle circ) {
         ddF_x += 2;
         f += ddF_x;
 
-        ili9488_draw_pixel(circ.xstart + x, circ.ystart + y, circ.color);
-        ili9488_draw_pixel(circ.xstart - x, circ.ystart + y, circ.color);
-        ili9488_draw_pixel(circ.xstart + x, circ.ystart - y, circ.color);
-        ili9488_draw_pixel(circ.xstart - x, circ.ystart - y, circ.color);
-        ili9488_draw_pixel(circ.xstart + y, circ.ystart + x, circ.color);
-        ili9488_draw_pixel(circ.xstart - y, circ.ystart + x, circ.color);
-        ili9488_draw_pixel(circ.xstart + y, circ.ystart - x, circ.color);
-        ili9488_draw_pixel(circ.xstart - y, circ.ystart - x, circ.color);
+        ili9488_draw_pixel(circ.x + x, circ.y + y, circ.color, 1);
+        ili9488_draw_pixel(circ.x - x, circ.y + y, circ.color, 1);
+        ili9488_draw_pixel(circ.x + x, circ.y - y, circ.color, 1);
+        ili9488_draw_pixel(circ.x - x, circ.y - y, circ.color, 1);
+        ili9488_draw_pixel(circ.x + y, circ.y + x, circ.color, 1);
+        ili9488_draw_pixel(circ.x - y, circ.y + x, circ.color, 1);
+        ili9488_draw_pixel(circ.x + y, circ.y - x, circ.color, 1);
+        ili9488_draw_pixel(circ.x - y, circ.y - x, circ.color, 1);
     }
 }
 
