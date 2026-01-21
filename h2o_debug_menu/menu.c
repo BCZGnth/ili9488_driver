@@ -61,7 +61,7 @@ void debug_draw_add_menu(Ili9488Defines screen) {
     };
 
     Ili9488Print circ_txt = {
-        .text = &(num_to_print[0]),
+        // .text = &(num_to_print[0]),
         .fg = GREEN,
         .font = screen.Screen.offset_2x,
         .ram_ptr = {
