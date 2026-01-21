@@ -40,14 +40,24 @@ void debug_draw_add_menu(Ili9488Defines screen) {
     uint16_t num_x_start = circ_x_start - (screen.Screen.offset_2x.width / 2);
     uint16_t num_y_start = circ_y_start - (screen.Screen.offset_2x.height / 2);
     uint16_t step = 102;
-    const char* numbers = "123456789x0+";
-    char num_to_print[2] = {*numbers, '\0'};
+    const char* numbers[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "x", "0", "+"};
+    // const char* numbers = "123456789x0+";
+    // char num_to_print[][2] = {*numbers, '\0'};
 
     Ili9488Circle circ = {
         .x = circ_x_start,
         .y = circ_y_start,
         .r = 51, /* 103 pixels / 2 */
         .color = MAGENTA,
+    };
+
+    Ili9488Rect rect = {
+        .color = MAGENTA,
+        .weight = 2,
+        .xstart = circ_x_start - (step / 2),
+        .xend =   circ_x_start + (step / 2),
+        .ystart = circ_y_start - (step / 2),
+        .yend =   circ_y_start + (step / 2),
     };
 
     Ili9488Print circ_txt = {
@@ -68,18 +78,26 @@ void debug_draw_add_menu(Ili9488Defines screen) {
         // Draw four rows of circles with their respective text
         for(uint8_t row = 0; row < 4; row++) {
 
-            circ.x = circ_x_start + (step * column);
-            circ.y = circ_y_start + (step * row);
-            ili9488_draw_circle(circ);
+            // circ.x = circ_x_start + (step * column);
+            // circ.y = circ_y_start + (step * row);
+            // ili9488_draw_circle(circ);
+
+            rect.xstart = add_touch_boxes[column + (3*row)].xs;
+            rect.xend =   add_touch_boxes[column + (3*row)].xe;
+            rect.ystart = add_touch_boxes[column + (3*row)].ys;
+            rect.yend =   add_touch_boxes[column + (3*row)].ye;
+            ili9488_draw_rect(screen, rect);
             
-            num_to_print[0] = *numbers;
+
+            // num_to_print[0] = *numbers;
+            circ_txt.text = numbers[(3*row) + column];
             circ_txt.ram_ptr.start_x = num_x_start + (step * column);
             circ_txt.ram_ptr.end_x = num_x_start + screen.Screen.offset_2x.width + (step * column);
             circ_txt.ram_ptr.start_y = num_y_start + (step * row);
             circ_txt.ram_ptr.end_y = num_y_start + screen.Screen.offset_2x.height + (step * row);
             ili9488_print(screen, circ_txt);
 
-            numbers++;
+            // numbers++;
         }
     }
 }
@@ -124,6 +142,15 @@ void debug_draw_main_menu(Ili9488Defines screen) {
         .color = MAGENTA,
     };
 
+    Ili9488Rect rect = {
+        .color = MAGENTA,
+        .weight = 2,
+        .xstart = circ_x_start - (step / 2),
+        .xend =   circ_x_start + (step / 2),
+        .ystart = circ_y_start - (step / 2),
+        .yend =   circ_y_start + (step / 2),
+    };
+
     Ili9488Print circ_txt = {
         // .text = button_txt[0],
         .fg = GREEN,
@@ -146,9 +173,14 @@ void debug_draw_main_menu(Ili9488Defines screen) {
         circ_txt.ram_ptr.start_x = circ_x_start - (text_length / 2);
         circ_txt.ram_ptr.end_x = circ_y_start + (text_length / 2);
         
-        circ.x = circ_x_start + (step * column);
+        // circ.x = circ_x_start + (step * column);
+        // ili9488_draw_circle(circ);
 
-        ili9488_draw_circle(circ);
+        rect.xstart = circ_x_start - (step / 2) + (step * column),
+        rect.xend =   circ_x_start + (step / 2) + (step * column),
+
+        ili9488_draw_rect(screen, rect);
+
         ili9488_print(screen, circ_txt);
     }
 

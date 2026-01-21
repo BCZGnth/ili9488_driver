@@ -758,8 +758,9 @@ void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t color, uint8_t debug_fla
                                                 });
     
     if(debug_flag) {
+        uint8_t byteofcolor = ((color << 3) & 0x38) | (color & 0x7);
         uint8_t lots_of_color[5];
-        memset(&lots_of_color, color, sizeof(lots_of_color));
+        memset(&lots_of_color, byteofcolor, sizeof(lots_of_color));
         ili9488_gram_write(&lots_of_color, sizeof(lots_of_color));
     } else {
         ili9488_gram_write(&color, 1);
