@@ -88,6 +88,59 @@ size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, u
     return pixel_count / 2;
 }
 
+size_t load_bitmap_3bit(color_t fg, uint8_t * dest, size_t dest_len, uint8_t * src, size_t src_len, size_t height, size_t width)
+{
+    #define GLYPH_MSB 1
+    #define GLYPH_LSB 0
+    uint8_t bit_pack_order = GLYPH_MSB;
+    /* Specify whether the bytes of the font are packed so 
+    that the MSB is placed at the top or if the LSB is placed at the top */
+
+    /* Number of pixels and bytes needed (2 pixels per byte) */
+    uint16_t pixel_count = width * height;
+    uint16_t byte_index = 0;
+
+    // Create a static buffer that will hold the glyph while we write it to the screen outside of this function.
+
+    fg &= 0x07;  /* keep only 3 bits */
+    color_t bg = 0;
+
+    uint16_t out_pixel = 0;
+
+    /**
+     * font_data[index][column (inverted)] contains one column, MSB = left-bottom pixel
+     * 
+     * Iterate through the bytes of the character bitmap (column-major) and load each bit into the character buffer provided.
+     */
+    for (uint8_t bitmap_byte = 0; bitmap_byte < src_len; bitmap_byte++)
+    {
+        uint8_t glyph_bits = *(src +  bitmap_byte);
+
+        for (uint8_t pixel = 0; pixel < 8; pixel++)
+        {
+            uint8_t bit   = (glyph_bits >> (7 - pixel)) & 1;
+
+            uint8_t color = bit ? fg : bg;
+
+            if ((out_pixel & 1) == 0)
+                dest[byte_index] = (color & 0x07) << 3;     // Pushing the n pixel to bits 5:3  
+                                                                // Set equal to clear the previous data from this byte address.
+            else
+                dest[byte_index] |= (color & 0x07);         // Keeping the n + 1 pixel in bits 2:0 
+                                                                // See datasheet section 4.7.2.1 for more information
+
+            out_pixel++;
+            byte_index = out_pixel / 2;
+            if (byte_index >= dest_len) break;
+        }
+        
+        if (byte_index >= dest_len) break;
+        if (out_pixel > pixel_count) break;
+    }
+
+    return pixel_count / 2;
+}
+
 
 /**
  * @brief A function to set the ram pointer to a position on the  (Dependent on the addressing mode)
@@ -103,6 +156,24 @@ void ili9488_ram_write(Ili9488RamWrite args) {
 
     // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers.)
     ili9488_gram_write(args.buf, args.buf_len);
+}
+
+/**
+ * @brief A function to set the ram pointer to a position on the  (Dependent on the addressing mode)
+ *
+ * @param x_start defines the LEFT-most bit (pixel) or 8-bit page (if in page addressing mode)
+ * @param x_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
+ * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
+ * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
+ */
+void ili9488_write_bitmap(Ili9488Defines screen, Ili9488WriteBitmap args) {
+    /** Set RAM pointer constraints based on x and y values given */
+    ili9488_set_ram_pointer(args.ram_ptr);
+
+    size_t buffer_length = load_bitmap_3bit(args.color, screen.Screen.pbuffer, screen.Screen.buffer_size, args.pbitmap, args.buf_len, args.height, args.width);
+
+    // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers.)
+    ili9488_gram_write(screen.Screen.pbuffer, buffer_length);
 }
 
 

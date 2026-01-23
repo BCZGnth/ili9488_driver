@@ -147,7 +147,12 @@ typedef struct Prnt{
 
 typedef struct WriteBitmap{
     uint8_t * pbitmap;
-    uint8_t   length;
+
+    uint16_t height;
+    uint16_t width;
+    
+    size_t   buf_len;
+    color_t   color;
 
     Ili9488RamPointer ram_ptr;
 } Ili9488WriteBitmap;

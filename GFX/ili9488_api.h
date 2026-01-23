@@ -11,6 +11,8 @@
 
 void   ili9488_ram_write(                                   Ili9488RamWrite args);
 void   ili9488_fill_color(       Ili9488Defines screen,     Ili9488FillBlock args);
+
+void ili9488_write_bitmap(Ili9488Defines screen, Ili9488WriteBitmap args);
 // void   ili9488_ramWrite(          ScreenDefines Screen,     ili9488RamWrite    args);
 size_t ili9488_write_number(     Ili9488Defines screen,     Ili9488WriteNumber args);
 void   ili9488_cls(              Ili9488Defines screen);

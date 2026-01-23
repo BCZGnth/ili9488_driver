@@ -254,10 +254,10 @@ void ili9488_draw_circle(Ili9488Circle circ) {
     int16_t x = 0;
     int16_t y = circ.r;
   
-    ili9488_draw_pixel(circ.x,          circ.y + circ.r, circ.color, 1);
-    ili9488_draw_pixel(circ.x,          circ.y - circ.r, circ.color, 1);
-    ili9488_draw_pixel(circ.x + circ.r, circ.y,          circ.color, 1);
-    ili9488_draw_pixel(circ.x - circ.r, circ.y,          circ.color, 1);
+    ili9488_draw_pixel(circ.x,          circ.y + circ.r, circ.color, 0);
+    ili9488_draw_pixel(circ.x,          circ.y - circ.r, circ.color, 0);
+    ili9488_draw_pixel(circ.x + circ.r, circ.y,          circ.color, 0);
+    ili9488_draw_pixel(circ.x - circ.r, circ.y,          circ.color, 0);
 
     while (x < y) {
         if (f >= 0) {
@@ -269,14 +269,14 @@ void ili9488_draw_circle(Ili9488Circle circ) {
         ddF_x += 2;
         f += ddF_x;
 
-        ili9488_draw_pixel(circ.x + x, circ.y + y, circ.color, 1);
-        ili9488_draw_pixel(circ.x - x, circ.y + y, circ.color, 1);
-        ili9488_draw_pixel(circ.x + x, circ.y - y, circ.color, 1);
-        ili9488_draw_pixel(circ.x - x, circ.y - y, circ.color, 1);
-        ili9488_draw_pixel(circ.x + y, circ.y + x, circ.color, 1);
-        ili9488_draw_pixel(circ.x - y, circ.y + x, circ.color, 1);
-        ili9488_draw_pixel(circ.x + y, circ.y - x, circ.color, 1);
-        ili9488_draw_pixel(circ.x - y, circ.y - x, circ.color, 1);
+        ili9488_draw_pixel(circ.x + x, circ.y + y, circ.color, 0);
+        ili9488_draw_pixel(circ.x - x, circ.y + y, circ.color, 0);
+        ili9488_draw_pixel(circ.x + x, circ.y - y, circ.color, 0);
+        ili9488_draw_pixel(circ.x - x, circ.y - y, circ.color, 0);
+        ili9488_draw_pixel(circ.x + y, circ.y + x, circ.color, 0);
+        ili9488_draw_pixel(circ.x - y, circ.y + x, circ.color, 0);
+        ili9488_draw_pixel(circ.x + y, circ.y - x, circ.color, 0);
+        ili9488_draw_pixel(circ.x - y, circ.y - x, circ.color, 0);
     }
 }
 

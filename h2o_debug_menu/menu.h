@@ -8,6 +8,7 @@ void debug_draw_add_menu(Ili9488Defines screen);
 void debug_draw_main_menu(Ili9488Defines screen);
 
 enum AddMenuKeys {
+    ADD_BUTTON_ZERO,
     ADD_BUTTON_ONE,
     ADD_BUTTON_TWO,
     ADD_BUTTON_THREE,
@@ -17,7 +18,6 @@ enum AddMenuKeys {
     ADD_BUTTON_SEVEN,
     ADD_BUTTON_EIGHT,
     ADD_BUTTON_NINE,
-    ADD_BUTTON_ZERO,
     ADD_BUTTON_DELETE,
     ADD_BUTTON_ADD_SN,
 };
@@ -124,6 +124,33 @@ static const TouchBox add_touch_boxes[] = {
         .ys = 375,
         .xe = 314,
         .ye = 476,
+    },
+};
+
+static const TouchBox main_touch_boxes[] = {
+    /* Exit */
+    {
+        .key = MAIN_BUTTON_EXIT,
+        .xs = 9,
+        .ys = 367,
+        .xe = 110,
+        .ye = 469,
+    },
+    /* Add Serial Number */
+    {
+        .key = MAIN_BUTTON_CLEAR_SN_LIST,
+        .xs = 111,
+        .ys = 367,
+        .xe = 212,
+        .ye = 469,
+    },
+    /* Clear SN List */
+    {
+        .key = MAIN_BUTTON_ADD_SN,
+        .xs = 213,
+        .ys = 367,
+        .xe = 314,
+        .ye = 469,
     },
 };
 

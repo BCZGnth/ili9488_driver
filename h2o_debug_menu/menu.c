@@ -20,7 +20,7 @@ void debug_draw_add_menu(Ili9488Defines screen) {
 
     Ili9488HVLine splitter = {
         .xstart = 4,
-        .ystart = 20,
+        .ystart = 60,
         .weight = 4,
         .length = screen.Screen.ScreenWidth - 9, // Account for the weight of the previous border on either side with the addition of one to account for a zero-indexed numbering system for the screen
         .color = CYAN,
@@ -40,7 +40,7 @@ void debug_draw_add_menu(Ili9488Defines screen) {
     uint16_t num_x_start = circ_x_start - (screen.Screen.offset_2x.width / 2);
     uint16_t num_y_start = circ_y_start - (screen.Screen.offset_2x.height / 2);
     uint16_t step = 102;
-    const char* numbers[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "x", "0", "+"};
+    static const char* numbers[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "x", "0", "+"};
     // const char* numbers = "123456789x0+";
     // char num_to_print[][2] = {*numbers, '\0'};
 
@@ -91,10 +91,10 @@ void debug_draw_add_menu(Ili9488Defines screen) {
 
             // num_to_print[0] = *numbers;
             circ_txt.text = numbers[(3*row) + column];
-            circ_txt.ram_ptr.start_x = num_x_start + (step * column);
-            circ_txt.ram_ptr.end_x = num_x_start + screen.Screen.offset_2x.width + (step * column);
-            circ_txt.ram_ptr.start_y = num_y_start + (step * row);
-            circ_txt.ram_ptr.end_y = num_y_start + screen.Screen.offset_2x.height + (step * row);
+            circ_txt.ram_ptr.start_x = add_touch_boxes[column + (3*row)].xs + step / 2; // num_x_start + (step * column);
+            circ_txt.ram_ptr.end_x   = add_touch_boxes[column + (3*row)].xe; // num_y_start + (step * row);
+            circ_txt.ram_ptr.start_y = add_touch_boxes[column + (3*row)].ys + step / 2; // num_x_start + screen.Screen.offset_2x.width + (step * column);
+            circ_txt.ram_ptr.end_y   = add_touch_boxes[column + (3*row)].ye; // num_y_start + screen.Screen.offset_2x.height + (step * row);
             ili9488_print(screen, circ_txt);
 
             // numbers++;
@@ -132,7 +132,7 @@ void debug_draw_main_menu(Ili9488Defines screen) {
     uint16_t num_x_start = circ_x_start - (screen.Screen.offset_2x.width / 2);
     uint16_t num_y_start = circ_y_start - (screen.Screen.offset_2x.height / 2);
     uint16_t step = 102;
-    const char* button_txt[] = {"Exit", "Clear", "Add"};
+    static const char* button_txt[] = {"EXIT", "CLEAR", "ADD"};
     // char num_to_print[2] = {*numbers, '\0'};
 
     Ili9488Circle circ = {
@@ -154,7 +154,7 @@ void debug_draw_main_menu(Ili9488Defines screen) {
     Ili9488Print circ_txt = {
         // .text = button_txt[0],
         .fg = GREEN,
-        .font = screen.Screen.offset_10x7,
+        .font = screen.Screen.offset_2x,
         .ram_ptr = {
             .start_x = num_x_start,
             .start_y = num_y_start,
@@ -170,14 +170,16 @@ void debug_draw_main_menu(Ili9488Defines screen) {
         text_length *= screen.Screen.offset_10x7.width_pad; 
 
         circ_txt.text = button_txt[column];
-        circ_txt.ram_ptr.start_x = circ_x_start - (text_length / 2);
-        circ_txt.ram_ptr.end_x = circ_y_start + (text_length / 2);
+        circ_txt.ram_ptr.start_x = circ_x_start - (text_length / 2) + (step * column);
+        circ_txt.ram_ptr.end_x = circ_y_start + (text_length / 2) + (step * column);
         
         // circ.x = circ_x_start + (step * column);
         // ili9488_draw_circle(circ);
 
-        rect.xstart = circ_x_start - (step / 2) + (step * column),
-        rect.xend =   circ_x_start + (step / 2) + (step * column),
+        rect.xstart = main_touch_boxes[column].xs;
+        rect.xend =   main_touch_boxes[column].xe;
+        rect.ystart = main_touch_boxes[column].ys;
+        rect.yend =   main_touch_boxes[column].ye;
 
         ili9488_draw_rect(screen, rect);
 
