@@ -88,6 +88,7 @@ size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, u
     return pixel_count / 2;
 }
 
+
 size_t load_bitmap_3bit(color_t fg, uint8_t * dest, size_t dest_len, uint8_t * src, size_t src_len, size_t height, size_t width)
 {
     #define GLYPH_MSB 1
@@ -158,6 +159,7 @@ void ili9488_ram_write(Ili9488RamWrite args) {
     ili9488_gram_write(args.buf, args.buf_len);
 }
 
+
 /**
  * @brief A function to set the ram pointer to a position on the  (Dependent on the addressing mode)
  *
@@ -166,14 +168,15 @@ void ili9488_ram_write(Ili9488RamWrite args) {
  * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
  * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
  */
-void ili9488_write_bitmap(Ili9488Defines screen, Ili9488WriteBitmap args) {
+void ili9488_write_bitmap(Ili9488Defines screen, Ili9488Bitmap args) {
     /** Set RAM pointer constraints based on x and y values given */
     ili9488_set_ram_pointer(args.ram_ptr);
 
-    size_t buffer_length = load_bitmap_3bit(args.color, screen.Screen.pbuffer, screen.Screen.buffer_size, args.pbitmap, args.buf_len, args.height, args.width);
+    size_t write_len = load_bitmap_3bit(args.color, screen.Screen.pbuffer, screen.Screen.buffer_size, args.pbitmap, args.buf_len, args.height, args.width);
+    printf("the buffer length is: %u\n", write_len);
 
     // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers.)
-    ili9488_gram_write(screen.Screen.pbuffer, buffer_length);
+    ili9488_gram_write(screen.Screen.pbuffer, write_len);
 }
 
 

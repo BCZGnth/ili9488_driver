@@ -155,7 +155,7 @@ typedef struct WriteBitmap{
     color_t   color;
 
     Ili9488RamPointer ram_ptr;
-} Ili9488WriteBitmap;
+} Ili9488Bitmap;
 
 typedef struct Cursor{
     uint8_t repeats;

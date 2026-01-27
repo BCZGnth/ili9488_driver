@@ -131,25 +131,25 @@ static const TouchBox main_touch_boxes[] = {
     /* Exit */
     {
         .key = MAIN_BUTTON_EXIT,
-        .xs = 9,
+        .xs = 7,
         .ys = 367,
-        .xe = 110,
+        .xe = 108,
         .ye = 469,
     },
     /* Add Serial Number */
     {
         .key = MAIN_BUTTON_CLEAR_SN_LIST,
-        .xs = 111,
+        .xs = 109,
         .ys = 367,
-        .xe = 212,
+        .xe = 210,
         .ye = 469,
     },
     /* Clear SN List */
     {
         .key = MAIN_BUTTON_ADD_SN,
-        .xs = 213,
+        .xs = 211,
         .ys = 367,
-        .xe = 314,
+        .xe = 312,
         .ye = 469,
     },
 };
