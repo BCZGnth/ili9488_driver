@@ -199,7 +199,7 @@ size_t load_bitmap_3bit(color_t fg, uint8_t * dest, size_t dest_len, uint8_t * s
  * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
  * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
  */
-void ili9488_ram_write(Ili9488RamWrite* args) {
+void ili9488_ram_write(Ili9488RamWrite * args) {
     /** Set RAM pointer constraints based on x and y values given */
     ili9488_set_ram_pointer(args->ram_ptr);
 
@@ -216,11 +216,11 @@ void ili9488_ram_write(Ili9488RamWrite* args) {
  * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
  * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
  */
-void ili9488_write_bitmap(Ili9488Defines* screen, Ili9488Bitmap* args) {
+void ili9488_write_bitmap(Ili9488Defines * screen, Ili9488Bitmap * args) {
     /** Set RAM pointer constraints based on x and y values given */
     ili9488_set_ram_pointer(args->ram_ptr);
 
-    size_t write_len = load_bitmap_3bit(args->color, screen->Screen->pbuffer, screen->Screen.buffer_size, args->pbitmap, args->buf_len, args->height, args->width);
+    size_t write_len = load_bitmap_3bit(args->color, screen->Screen.pbuffer, screen->Screen.buffer_size, args->pbitmap, args->buf_len, args->height, args->width);
     printf("the buffer length is: %u\n", write_len);
 
     // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers->)
@@ -228,18 +228,18 @@ void ili9488_write_bitmap(Ili9488Defines* screen, Ili9488Bitmap* args) {
 }
 
 
-void ili9488_fill_color(Ili9488Defines* screen, Ili9488FillBlock* args)
+void ili9488_fill_color(Ili9488Defines * screen, Ili9488RamPointer * args, color_t color)
 {
     ADD_TO_STACK_DEPTH();
     // level_log(TRACE, "Filling a block");
 
     color_t color = 0;
-    color |= (args->color & 0x7);
+    color |= (color & 0x7);
     color = color << 3;
-    color |= (args->color & 0x7);
+    color |= (color & 0x7);
 
-    uint24_t block_height = args->ram_ptr.end_y - args->ram_ptr.start_y + 1;
-    uint24_t block_width = args->ram_ptr.end_x - args->ram_ptr.start_x + 1; 
+    uint24_t block_height = args->end_y - args->start_y + 1;
+    uint24_t block_width = args->end_x - args->start_x + 1; 
     uint24_t total_block_bytes = block_height * block_width;
 
     // Calculate the number of full iterations needed
@@ -263,7 +263,7 @@ void ili9488_fill_color(Ili9488Defines* screen, Ili9488FillBlock* args)
     // Initialize the buffer with zeros (clear screen data)
     memset(screen->Screen.pbuffer, color, screen->Screen.buffer_size);
 
-    ili9488_set_ram_pointer(args->ram_ptr);
+    ili9488_set_ram_pointer(*args);
 
     // Perform full buffer writes
     ili9488_gram_write(screen->Screen.pbuffer, screen->Screen.buffer_size);
@@ -336,7 +336,7 @@ print at one time.
  *      This is only possible because the i2c buffer is loaded with zeros before any data gets written to it.
  *
  */
-size_t ili9488_write_number(Ili9488Defines* screen, Ili9488WriteNumber* args) {
+size_t ili9488_write_number(Ili9488Defines * screen, Ili9488WriteNumber * args) {
 
     ADD_TO_STACK_DEPTH(); // ili9488_write_number
     // level_log(TRACE, "Writing Number:");
@@ -364,7 +364,8 @@ size_t ili9488_write_number(Ili9488Defines* screen, Ili9488WriteNumber* args) {
      * Load the data_to_write buffer with the character from our variable
      * Use sn// printf because it allows overwrite protection that always ends in a null terminator
      */
-    number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args->data); // putting zeros at the end of the string so that it is less noise to the viewer
+    number_of_chars_written = int32_to_str(args->data, &data_to_write[0], MAX_NUMBER_OF_CHARS);
+    // number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args->data); // putting zeros at the end of the string so that it is less noise to the viewer
     if(number_of_chars_written <= 0) {
         // level_log(ERROR, "sn// printf call did not write data to a buffer. Possibly you have a bad args.data");
     }
@@ -407,7 +408,7 @@ size_t ili9488_write_number(Ili9488Defines* screen, Ili9488WriteNumber* args) {
     //     num_to_print.ram_ptr.start_x += right_align_pixel_offset;
     // }
 
-    ili9488_print(screen, num_to_print);
+    ili9488_print(screen, &num_to_print);
 
 
     // level_log(TRACE, "ILI9488: Done Writing Number");
@@ -423,7 +424,7 @@ size_t ili9488_write_number(Ili9488Defines* screen, Ili9488WriteNumber* args) {
  *
  * @brief A function to print a string on the screen
  */
-size_t ili9488_print(Ili9488Defines* screen, Ili9488Print* args) {
+size_t ili9488_print(Ili9488Defines * screen, Ili9488Print * args) {
 
     ADD_TO_STACK_DEPTH(); // ili9488_print    
     // level_log(TRACE, "Printing:");
@@ -434,20 +435,14 @@ size_t ili9488_print(Ili9488Defines* screen, Ili9488Print* args) {
     if(args->clear_before) {
         /* Lock the background black */
         args->bg = BLACK;
-
-        Ili9488FillBlock background = {
-            .color = args->bg,
-            .ram_ptr = args->ram_ptr
-        };
-
-        ili9488_fill_color(screen, background);
+        ili9488_fill_color(screen, &(args->ram_ptr), args->bg);
     }
 
     // uint16_t tmp16; // A variable to hold the 16 bit value of a scaled byte
     // uint8_t tmp[2]; // tmp16 will get split into these two bytes to get the right endianness when sending the data over the i2c bus.
     uint8_t preserve_frame = 0;
     uint16_t box_width = args->ram_ptr.end_x - args->ram_ptr.start_x + 1;
-    uint16_t box_height = args.ram_ptr.end_y - args->ram_ptr.start_y + 1;
+    uint16_t box_height = args->ram_ptr.end_y - args->ram_ptr.start_y + 1;
     uint16_t xoff = 0;
     uint16_t yoff = 0;
     uint8_t write_width = args->font.width + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
@@ -606,7 +601,7 @@ size_t ili9488_print(Ili9488Defines* screen, Ili9488Print* args) {
 }
 
 
-void ili9488_cls(Ili9488Defines* screen)
+void ili9488_cls(Ili9488Defines * screen)
 {
     ADD_TO_STACK_DEPTH();
     // level_log(TRACE, "Clearing the screen");
@@ -674,19 +669,12 @@ void ili9488_cls(Ili9488Defines* screen)
 }
 
 
-void ili9488_clear_block(Ili9488Defines* screen, Ili9488RamPointer args)
+void ili9488_clear_block(Ili9488Defines * screen, Ili9488RamPointer * args)
 {
-
     ADD_TO_STACK_DEPTH();
-
     // level_log(TRACE, "Clearing a block");
 
-    Ili9488FillBlock clear_block = {
-        .color = BLACK,
-        .ram_ptr = args
-    };
-
-    ili9488_fill_color(screen, &clear_block);
+    ili9488_fill_color(screen, args, BLACK);
 
     // level_log(TRACE, "ILI9488: Screen Block Cleared");
     REMOVE_FROM_STACK_DEPTH();
