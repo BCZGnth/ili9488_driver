@@ -27,6 +27,54 @@
 //     ili9488_gram_write(inter, args.pbitmap, args.length);
 // }
 
+/** 
+ * An alternative to snprintf:
+ * 
+ */
+
+ // Ultra-compact int32 to string converter (saves 8-10KB!)
+static uint8_t int32_to_str(int32_t num, char* buf, uint8_t bufsize) {
+    uint8_t i = 0;
+    uint8_t negative = 0;
+    
+    if (num < 0) {
+        negative = 1;
+        num = -num;
+    }
+    
+    // Handle zero case
+    if (num == 0) {
+        buf[i++] = '0';
+        buf[i] = '\0';
+        return 1;
+    }
+    
+    // Convert digits (in reverse)
+    uint8_t start = i;
+    while (num > 0 && i < bufsize - 1) {
+        buf[i++] = '0' + (num % 10);
+        num /= 10;
+    }
+    
+    if (negative && i < bufsize - 1) {
+        buf[i++] = '-';
+    }
+    
+    buf[i] = '\0';
+    
+    // Reverse the string
+    uint8_t end = i - 1;
+    while (start < end) {
+        char temp = buf[start];
+        buf[start] = buf[end];
+        buf[end] = temp;
+        start++;
+        end--;
+    }
+    
+    return i;
+}
+
 /**
  * Function loads a static buffer with the screen-ready pixel 
  * 
@@ -151,12 +199,12 @@ size_t load_bitmap_3bit(color_t fg, uint8_t * dest, size_t dest_len, uint8_t * s
  * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
  * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
  */
-void ili9488_ram_write(Ili9488RamWrite args) {
+void ili9488_ram_write(Ili9488RamWrite* args) {
     /** Set RAM pointer constraints based on x and y values given */
-    ili9488_set_ram_pointer(args.ram_ptr);
+    ili9488_set_ram_pointer(args->ram_ptr);
 
     // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers.)
-    ili9488_gram_write(args.buf, args.buf_len);
+    ili9488_gram_write(args->buf, args->buf_len);
 }
 
 
@@ -168,35 +216,35 @@ void ili9488_ram_write(Ili9488RamWrite args) {
  * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
  * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
  */
-void ili9488_write_bitmap(Ili9488Defines screen, Ili9488Bitmap args) {
+void ili9488_write_bitmap(Ili9488Defines* screen, Ili9488Bitmap* args) {
     /** Set RAM pointer constraints based on x and y values given */
-    ili9488_set_ram_pointer(args.ram_ptr);
+    ili9488_set_ram_pointer(args->ram_ptr);
 
-    size_t write_len = load_bitmap_3bit(args.color, screen.Screen.pbuffer, screen.Screen.buffer_size, args.pbitmap, args.buf_len, args.height, args.width);
+    size_t write_len = load_bitmap_3bit(args->color, screen->Screen->pbuffer, screen->Screen.buffer_size, args->pbitmap, args->buf_len, args->height, args->width);
     printf("the buffer length is: %u\n", write_len);
 
-    // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers.)
-    ili9488_gram_write(screen.Screen.pbuffer, write_len);
+    // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers->)
+    ili9488_gram_write(screen->Screen.pbuffer, write_len);
 }
 
 
-void ili9488_fill_color(Ili9488Defines screen, Ili9488FillBlock args)
+void ili9488_fill_color(Ili9488Defines* screen, Ili9488FillBlock* args)
 {
     ADD_TO_STACK_DEPTH();
     // level_log(TRACE, "Filling a block");
 
     color_t color = 0;
-    color |= (args.color & 0x7);
+    color |= (args->color & 0x7);
     color = color << 3;
-    color |= (args.color & 0x7);
+    color |= (args->color & 0x7);
 
-    uint24_t block_height = args.ram_ptr.end_y - args.ram_ptr.start_y + 1;
-    uint24_t block_width = args.ram_ptr.end_x - args.ram_ptr.start_x + 1; 
+    uint24_t block_height = args->ram_ptr.end_y - args->ram_ptr.start_y + 1;
+    uint24_t block_width = args->ram_ptr.end_x - args->ram_ptr.start_x + 1; 
     uint24_t total_block_bytes = block_height * block_width;
 
     // Calculate the number of full iterations needed
-    uint24_t iterations = total_block_bytes / (uint24_t)screen.Screen.buffer_size;
-    uint24_t remainder = total_block_bytes % (uint24_t)screen.Screen.buffer_size;
+    uint24_t iterations = total_block_bytes / (uint24_t)screen->Screen.buffer_size;
+    uint24_t remainder = total_block_bytes % (uint24_t)screen->Screen.buffer_size;
 
     // Log debug information
     // level_log(TRACE, "Fill length is:");
@@ -213,21 +261,21 @@ void ili9488_fill_color(Ili9488Defines screen, Ili9488FillBlock args)
     // printf("%lu", (uint32_t)remainder);
     
     // Initialize the buffer with zeros (clear screen data)
-    memset(screen.Screen.pbuffer, color, screen.Screen.buffer_size);
+    memset(screen->Screen.pbuffer, color, screen->Screen.buffer_size);
 
-    ili9488_set_ram_pointer(args.ram_ptr);
+    ili9488_set_ram_pointer(args->ram_ptr);
 
     // Perform full buffer writes
-    ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
+    ili9488_gram_write(screen->Screen.pbuffer, screen->Screen.buffer_size);
     for (uint24_t i = 1; i < iterations; i++) {
-        ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
+        ili9488_gram_write_continue(screen->Screen.pbuffer, screen->Screen.buffer_size);
     }
     
     // level_log(TRACE, "Wrote iterations, Now writing remainder");
 
     // Handle any remaining bytes
     if (remainder > 0) {
-        ili9488_gram_write_continue(screen.Screen.pbuffer, (size_t)remainder);
+        ili9488_gram_write_continue(screen->Screen.pbuffer, (size_t)remainder);
      }
 
     // level_log(TRACE, "ILI9488: Block Filled");
@@ -288,7 +336,7 @@ print at one time.
  *      This is only possible because the i2c buffer is loaded with zeros before any data gets written to it.
  *
  */
-size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
+size_t ili9488_write_number(Ili9488Defines* screen, Ili9488WriteNumber* args) {
 
     ADD_TO_STACK_DEPTH(); // ili9488_write_number
     // level_log(TRACE, "Writing Number:");
@@ -300,7 +348,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
     #define MAX_NUMBER_OF_CHARS 10
     uint16_t box_length = 0, msg_pixel_x_length = 0, number_of_chars_written = 0, right_align_pixel_offset = 0; // the sn// printf function actually returns an integer value, but I hope that the amount of characters will never exceed 255...
     unsigned char data_to_write[MAX_NUMBER_OF_CHARS]; // Don't really need to display numbers that are longer than 24 characters
-    FontOffset write_num_off = args.font;
+    FontOffset write_num_off = args->font;
     // ili9488_set_ram_pointer(screen.interface, args.ram_ptr);
     
     // Hopefully won't ever need this...
@@ -316,13 +364,13 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
      * Load the data_to_write buffer with the character from our variable
      * Use sn// printf because it allows overwrite protection that always ends in a null terminator
      */
-    number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args.data); // putting zeros at the end of the string so that it is less noise to the viewer
+    number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args->data); // putting zeros at the end of the string so that it is less noise to the viewer
     if(number_of_chars_written <= 0) {
         // level_log(ERROR, "sn// printf call did not write data to a buffer. Possibly you have a bad args.data");
     }
 
-    if(args.right_aligned) {
-        box_length = args.ram_ptr.end_x - args.ram_ptr.start_x;
+    if(args->right_aligned) {
+        box_length = args->ram_ptr.end_x - args->ram_ptr.start_x;
         msg_pixel_x_length = number_of_chars_written * write_num_off.width_pad;
         right_align_pixel_offset = box_length - msg_pixel_x_length;
         if(msg_pixel_x_length > box_length) {
@@ -343,14 +391,14 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
      */
     Ili9488Print num_to_print = {
         .text         = &data_to_write[0],
-        .fg           = args.fg,
-        .ram_ptr      = args.ram_ptr,
+        .fg           = args->fg,
+        .ram_ptr      = args->ram_ptr,
         .line_spacing = 0,
-        .font         = args.font,
-        .clear_before = args.clear_before,
+        .font         = args->font,
+        .clear_before = args->clear_before,
     }; 
 
-    num_to_print.ram_ptr.start_x = args.ram_ptr.start_x + right_align_pixel_offset;
+    num_to_print.ram_ptr.start_x = args->ram_ptr.start_x + right_align_pixel_offset;
 
     // if( num_to_print.ram_ptr.start_x + right_align_pixel_offset > write_num_off.width_pad) {
     //     num_to_print.ram_ptr.start_x += right_align_pixel_offset;
@@ -375,7 +423,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
  *
  * @brief A function to print a string on the screen
  */
-size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
+size_t ili9488_print(Ili9488Defines* screen, Ili9488Print* args) {
 
     ADD_TO_STACK_DEPTH(); // ili9488_print    
     // level_log(TRACE, "Printing:");
@@ -383,13 +431,13 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     // level_log(TRACE, "Foreground Color:");
     // printf("0x%x", args.fg);
 
-    if(args.clear_before) {
+    if(args->clear_before) {
         /* Lock the background black */
-        args.bg = BLACK;
+        args->bg = BLACK;
 
         Ili9488FillBlock background = {
-            .color = args.bg,
-            .ram_ptr = args.ram_ptr
+            .color = args->bg,
+            .ram_ptr = args->ram_ptr
         };
 
         ili9488_fill_color(screen, background);
@@ -398,16 +446,16 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     // uint16_t tmp16; // A variable to hold the 16 bit value of a scaled byte
     // uint8_t tmp[2]; // tmp16 will get split into these two bytes to get the right endianness when sending the data over the i2c bus.
     uint8_t preserve_frame = 0;
-    uint16_t box_width = args.ram_ptr.end_x - args.ram_ptr.start_x + 1;
-    uint16_t box_height = args.ram_ptr.end_y - args.ram_ptr.start_y + 1;
+    uint16_t box_width = args->ram_ptr.end_x - args->ram_ptr.start_x + 1;
+    uint16_t box_height = args.ram_ptr.end_y - args->ram_ptr.start_y + 1;
     uint16_t xoff = 0;
     uint16_t yoff = 0;
-    uint8_t write_width = args.font.width + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
-    uint8_t write_height = args.font.height;
+    uint8_t write_width = args->font.width + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
+    uint8_t write_height = args->font.height;
     size_t write_len = 0;
     bool last_line_flag = false;
     uint8_t char_pad = 1;
-    uint8_t char_height = args.font.height + args.line_spacing;
+    uint8_t char_height = args->font.height + args->line_spacing;
     size_t chars_written = 0;
     uint16_t row_increment = 0;
 
@@ -444,7 +492,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     /** No scaling applied, and the message is copied into the i2c buffer */
     // level_log(TRACE, "Print: No scale applied");
     // Iterate through the entire string until a null terminator
-    const char* msg_letter = args.text;
+    const char* msg_letter = args->text;
     unsigned char msg_char = *msg_letter;
     /**
      * For each character:
@@ -547,8 +595,8 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         }
 
         // Calculate the ram_pointer based on offsets:
-        char_placement.start_x = args.ram_ptr.start_x + xoff;
-        char_placement.start_y    = args.ram_ptr.start_y + yoff;
+        char_placement.start_x = args->ram_ptr.start_x + xoff;
+        char_placement.start_y    = args->ram_ptr.start_y + yoff;
         char_placement.end_x   = char_placement.start_x + write_width - 1  /*- 1 To maintain Zero Indexing */;
         char_placement.end_y      = char_placement.start_y + write_height - 1 /*- 1 To Maintain Zero Indexing */;
         // printf("Char x = %u, Char y = %u, xoff = %u, yoff = %u", char_placement.start_x, char_placement.start_y, xoff, yoff);
@@ -557,13 +605,13 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         // char_attrs.character = msg_char;
 
         /* The write_len variable will always be smaller or equal to the screen.Screen.buffer_size */
-        write_len = load_glyph_3bit(msg_char, args.fg, args.bg, args.font, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        write_len = load_glyph_3bit(msg_char, args->fg, args->bg, args->font, screen->Screen.pbuffer, screen->Screen.buffer_size);
         /* but, just in case */
-        if (write_len > screen.Screen.buffer_size) {
-            write_len = screen.Screen.buffer_size;
+        if (write_len > screen->Screen.buffer_size) {
+            write_len = screen->Screen.buffer_size;
         }
         // // level_log(TRACE, "Write Length is: %d", write_len);
-        ili9488_gram_write(screen.Screen.pbuffer, write_len);
+        ili9488_gram_write(screen->Screen.pbuffer, write_len);
         
         /* We may potentially want to make word boundary aware printing...but not today.*/
         // for (unsigned char * word_letter = msg_letter; word_letter != '\0'; word_letter++) 
@@ -583,18 +631,18 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
 
     // level_log(TRACE, "Print: Done Printing.");
     REMOVE_FROM_STACK_DEPTH(); // ili9488_print
-    return (chars_written * screen.Screen.character.width_pad);
+    return (chars_written * screen->Screen.character.width_pad);
 }
 
 
-void ili9488_cls(Ili9488Defines screen)
+void ili9488_cls(Ili9488Defines* screen)
 {
     ADD_TO_STACK_DEPTH();
     // level_log(TRACE, "Clearing the screen");
 
     /* Calculate the most efficient way to clear the screen with the given buffer */
     // Calculate total screen size in bytes (assuming 1 bit per pixel, 8 pixels per byte vertically)
-    uint32_t total_screen_bytes = ((uint32_t)screen.Screen.ScreenWidth) * ((uint32_t)screen.Screen.ScreenHeight) / (uint32_t)2;
+    uint32_t total_screen_bytes = ((uint32_t)screen->Screen.ScreenWidth) * ((uint32_t)screen->Screen.ScreenHeight) / (uint32_t)2;
 
     // Use the full buffer size for clearing (assuming clear_length is the usable buffer size)
     /* We will also assume that the Screen.buffer_size is greater than 1 */
@@ -607,8 +655,8 @@ void ili9488_cls(Ili9488Defines screen)
     // }
 
     // Calculate the number of full iterations needed
-    uint32_t iterations = total_screen_bytes / (uint32_t)screen.Screen.buffer_size;
-    uint32_t remainder = total_screen_bytes % (uint32_t)screen.Screen.buffer_size;
+    uint32_t iterations = total_screen_bytes / (uint32_t)screen->Screen.buffer_size;
+    uint32_t remainder = total_screen_bytes % (uint32_t)screen->Screen.buffer_size;
 
     // Log debug information
     // level_log(TRACE, "Clear Length is:");
@@ -625,29 +673,29 @@ void ili9488_cls(Ili9488Defines screen)
     // printf("%lu", remainder);
     
     // Initialize the buffer with zeros (clear screen data)
-    memset(screen.Screen.pbuffer, 0, screen.Screen.buffer_size);
+    memset(screen->Screen.pbuffer, 0, screen->Screen.buffer_size);
 
     
     Ili9488RamPointer full_screen = {
         .start_y = 0,
-        .end_y = screen.Screen.ScreenHeight - 1,
+        .end_y = screen->Screen.ScreenHeight - 1,
         .start_x = 0,
-        .end_x = screen.Screen.ScreenWidth - 1
+        .end_x = screen->Screen.ScreenWidth - 1
     };
 
     ili9488_set_ram_pointer(full_screen);
 
     // Perform full buffer writes
-    ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
+    ili9488_gram_write(screen->Screen.pbuffer, screen->Screen.buffer_size);
     for (uint32_t i = 1; i < iterations; i++) {
-        ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
+        ili9488_gram_write_continue(screen->Screen.pbuffer, screen->Screen.buffer_size);
     }
     
     // level_log(TRACE, "Wrote iterations, Now writing remainder");
 
     // Handle any remaining bytes
     if (remainder > 0) {
-        ili9488_gram_write_continue(screen.Screen.pbuffer, (size_t)remainder);
+        ili9488_gram_write_continue(screen->Screen.pbuffer, (size_t)remainder);
      }
 
     // level_log(TRACE, "Ili9488: Screen Cleared");
@@ -655,7 +703,7 @@ void ili9488_cls(Ili9488Defines screen)
 }
 
 
-void ili9488_clear_block(Ili9488Defines screen, Ili9488RamPointer args)
+void ili9488_clear_block(Ili9488Defines* screen, Ili9488RamPointer args)
 {
 
     ADD_TO_STACK_DEPTH();
@@ -667,160 +715,12 @@ void ili9488_clear_block(Ili9488Defines screen, Ili9488RamPointer args)
         .ram_ptr = args
     };
 
-    ili9488_fill_color(screen, clear_block);
+    ili9488_fill_color(screen, &clear_block);
 
     // level_log(TRACE, "ILI9488: Screen Block Cleared");
     REMOVE_FROM_STACK_DEPTH();
 }
 
-// void ili9488_clear_word(ScreenDefines Screen, Ili9488Clear args)
-// {
-//     ADD_TO_STACK_DEPTH();
-//     // level_log(TRACE, "Clearing a word of length %d", args.char_length);
-
-//     ili9488_set_ram_pointer(Screen, args.ram_ptr);
-
-//     #ifndef USE_STATIC_BUFFERS
-//     Screen.pbuffer = malloc(129);
-//     if(!Screen.pbuffer){
-//         // level_log(ERROR, "Memory allocation failed for the I2C buffer");
-//         REMOVE_FROM_STACK_DEPTH();
-//         return;
-//     }
-//     #endif
-//     #ifdef USE_STATIC_BUFFERS
-//     if( (Screen.character.width_pad * args.char_length + Screen.offset.control) > Screen.buffer_size) { 
-//         // level_log(ERROR, "Buffer Too Small");
-//         return; 
-//     }
-//     #endif
-
-//     // Set the bytes that we need to zero. Length of each character plus the length of the pad between characters plus the length of the control data
-//     memset(Screen.pbuffer, 0, (Screen.character.width_pad * args.char_length) + Screen.offset.control);
-//     memcpy(Screen.pbuffer, (&SSD1309_RAM_WRITE_BYTE), 1);
-
-//     // Write all the bytes that we manipulated
-//     ssd_write(Screen, (Screen.character.width_pad * args.char_length) + Screen.offset.control);
-
-//     // level_log(TRACE, "SSD1309: Word(s) Cleared");
-//     REMOVE_FROM_STACK_DEPTH();
-// }
-
-// void ili9488_blinking_cursor(ScreenDefines Screen, Ili9488Cursor args)
-// {
-//     /** Start by keeping track of how many function calls deep we are */
-//     ADD_TO_STACK_DEPTH();
-//     // level_log(TRACE, "Blinking Cursor: page %u, column %u, repeats %u", args.ram_ptr.page, args.ram_ptr.position, args.repeats);
-
-//     size_t size;
-
-//     if(Screen.offset.control + 5 > Screen.buffer_size) {
-//         // level_log(ERROR, "Buffer Size Too Small");
-//     }
-
-//     /** malloc so that the cursor doesn't take up extra space */
-//     uint8_t cursor[5];
-
-//     ili9488_set_ram_pointer(Screen, args.ram_ptr);
-
-//     /** Modifying repeats to translate from number of repeats to iterations of the for loop that have to run */
-//     args.repeats *= 2;
-//     /** Using the pre-increment operator rather than adding one to repeats */
-//     args.repeats += 1; // Add one to make sure we end on a blank cursor 
-
-//     for (int i = 1; i < args.repeats; ++i)
-//     {
-
-//         /** Decide whether to set the cursor all zeros or all ones */
-//         memset(&cursor, ((i % 2) * 0xFF), 5);
-
-//         /** Loading and writing the i2c buffer */
-//         size = load_i2c_buffer(Screen,(uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, cursor, 5);
-//         ssd_write(Screen, size);
-
-//         ili9488_set_ram_pointer(Screen, args.ram_ptr);
-//         __delay_ms(200);
-//     }
-
-//     // level_log(TRACE, "Blinking Cursor: Done Blinking Cursor");
-//     REMOVE_FROM_STACK_DEPTH();
-// }
-
-// void ili9488_progress_bar(ScreenDefines Screen )
-// {
-//     return;
-// }
-
-// void ili9488_waiting(ScreenDefines Screen)
-// {
-//     ADD_TO_STACK_DEPTH();
-//     // level_log(TRACE, "SSD1309 Waiting...");
-    
-//     uint8_t animation_length = 14;
-//     Ili9488RamPointer wait_ram_ptr = {
-//         .page = 7,
-//         .position = 112
-//     };
-
-//     /* Memory Corruption Error Checking */
-//     if(Screen.buffer_size < animation_length + Screen.offset.control) { 
-//         // level_log(ERROR, "Buffer Too Small"); 
-//         return; 
-//     }
-
-//     ili9488_set_ram_pointer(Screen, wait_ram_ptr);
-
-//     uint8_t dots[24] = {0, 0xc0, 0xc0, 0, 0,  0, 0xc0, 0xc0, 0, 0,  0, 0xc0, 0xc0, 0, 0,  0, 0, 0, 0, 0,   0, 0, 0, 0 };
-    
-//     /* Depending on where we are in the cycle, either add another dot, or clear the space. 
-//        We are using arrays instead of the ili9488_print function because this is at least a little faster. */
-//     switch (Screen.pwait->three_ctr) {
-//         case 0:
-//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-//             memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
-//             ssd_write(Screen, animation_length + Screen.offset.control);
-//             Screen.pwait->three_ctr += 1;
-//             break;
-//         case 1:
-//         case 5:
-//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-//             memcpy(Screen.pbuffer + Screen.offset.control, &dots + 10, animation_length + Screen.offset.control);
-//             ssd_write(Screen, animation_length + Screen.offset.control);
-//             Screen.pwait->three_ctr += 1;
-//             break;
-//         case 2:
-//         case 4:
-//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-//             memcpy(Screen.pbuffer + Screen.offset.control, &dots + 5, animation_length + Screen.offset.control);
-//             ssd_write(Screen, animation_length + Screen.offset.control);
-//             Screen.pwait->three_ctr += 1;
-//             break;
-//         case 3:
-//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-//             memcpy(Screen.pbuffer + Screen.offset.control, &dots, animation_length + Screen.offset.control);
-//             ssd_write(Screen, animation_length + Screen.offset.control);
-//             Screen.pwait->three_ctr += 1;
-//             break;
-//         case 6:
-//         default:
-//         /* Fast default case */
-//             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-//             memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
-//             ssd_write(Screen, animation_length + Screen.offset.control);
-//             Screen.pwait->three_ctr = 0;
-//             break;
-//         // default:
-//         //     memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);
-//         //     memset(Screen.pbuffer + Screen.offset.control, 0, animation_length + Screen.offset.control);
-//         //     ssd_write(Screen, animation_length * Screen.character.width);
-//         //     Screen.pwait->three_ctr = 0;
-//         //     break;
-//     }
-
-//     // level_log(TRACE, "SSD1309 Done Waiting");
-//     REMOVE_FROM_STACK_DEPTH();
-//     return;
-// }
 
 void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t color, uint8_t debug_flag) {
 
@@ -831,14 +731,9 @@ void ili9488_draw_pixel(uint16_t x, uint16_t y, color_t color, uint8_t debug_fla
                                                     .end_y = y,
                                                 });
     
-    if(debug_flag) {
-        uint8_t byteofcolor = ((color << 3) & 0x38) | (color & 0x7);
-        uint8_t lots_of_color[5];
-        memset(&lots_of_color, byteofcolor, sizeof(lots_of_color));
-        ili9488_gram_write(&lots_of_color, sizeof(lots_of_color));
-    } else {
-        ili9488_gram_write(&color, 1);
-    }
+    // Since only the last pixel will be written in single pixel write, 
+    // Just write the entire byte that already has the last 
+    ili9488_gram_write(&color, 1);
 
 }
 

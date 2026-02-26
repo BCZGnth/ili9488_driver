@@ -24,10 +24,18 @@ enum AddMenuKeys {
 
 enum MainMenuKeys {
     MAIN_BUTTON_EXIT,
-    MAIN_BUTTON_CLEAR_SN_LIST,
-    MAIN_BUTTON_ADD_SN,
+    MAIN_BUTTON_SERIAL_MENU,
+    MAIN_BUTTON_TRANSMIT_MENU,
 };
 
+enum WhitelistMenuKeys {
+    WHITELIST_CLEAR_SN_LIST,
+    WHITELIST_ADD_SN,
+}
+
+enum TransmitMenuKeys {
+    
+}
 static const TouchBox add_touch_boxes[] = {
     /* #1 */
     {

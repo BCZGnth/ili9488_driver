@@ -257,3 +257,197 @@ void ili9488_gram_write_continue(uint8_t * pbuf, uint24_t len)
     CS1_SetHigh();
 
 }
+
+/*
+Optimized functions to eliminate variadic function calls:
+*/
+void ili9488_0byte_command(uint16_t len_cmd)
+{
+    uint8_t len = (len_cmd >> 8) & 0xff;
+    uint8_t cmd = (len_cmd & 0xff);
+
+    if(len != 0) return;
+
+    CS1_SetLow(); // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    DC1_SetLow(); // Set command mode (DC pin is command when LOW and data when HIGH)
+    
+    // Ignore reception with void cast
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    SPI1TCNT = 1;
+    SPI1_ByteWrite(cmd);
+    while(!PIR3bits.SPI1RXIF); //__delay_us(16);
+    // while(SPI1CON2bits.BUSY) {/* // printf(".\n"): */ continue; }
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(cmd);
+    #endif
+
+    // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    CS1_SetHigh();
+}
+
+void ili9488_1byte_command(uint16_t len_cmd, uint8_t b1)
+{
+    uint8_t len = (len_cmd >> 8) & 0xff;
+    uint8_t cmd = (len_cmd & 0xff);
+
+    if(len != 1) return;
+
+    CS1_SetLow(); // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    DC1_SetLow(); // Set command mode (DC pin is command when LOW and data when HIGH)
+    
+    // Ignore reception with void cast
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    SPI1TCNT = 1;
+    SPI1_ByteWrite(cmd);
+    while(!PIR3bits.SPI1RXIF); //__delay_us(16);
+    // while(SPI1CON2bits.BUSY) {/* // printf(".\n"): */ continue; }
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(cmd);
+    #endif
+    
+    DC1_SetHigh();
+
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+    SPI1_ByteWrite(b1);
+    // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(b1);
+    #endif
+
+    // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    CS1_SetHigh();
+}
+
+
+void ili9488_2byte_command(uint16_t len_cmd, uint8_t b1, uint8_t b2)
+{
+    uint8_t len = (len_cmd >> 8) & 0xff;
+    uint8_t cmd = (len_cmd & 0xff);
+
+    if(len != 2) return;
+
+    CS1_SetLow(); // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    DC1_SetLow(); // Set command mode (DC pin is command when LOW and data when HIGH)
+    
+    // Ignore reception with void cast
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    SPI1TCNT = 1;
+    SPI1_ByteWrite(cmd);
+    while(!PIR3bits.SPI1RXIF); //__delay_us(16);
+    // while(SPI1CON2bits.BUSY) {/* // printf(".\n"): */ continue; }
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(cmd);
+    #endif
+    
+    DC1_SetHigh();
+
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+    SPI1_ByteWrite(b1);
+    SPI1_ByteWrite(b2);
+    // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(b1);
+    fast_spi_write_byte(b2);
+    #endif
+
+    // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    CS1_SetHigh();
+}
+
+void ili9488_3byte_command(uint16_t len_cmd, uint8_t b1, uint8_t b2, uint8_t b3)
+{
+    uint8_t len = (len_cmd >> 8) & 0xff;
+    uint8_t cmd = (len_cmd & 0xff);
+
+    if(len != 3) return;
+
+    CS1_SetLow(); // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    DC1_SetLow(); // Set command mode (DC pin is command when LOW and data when HIGH)
+    
+    // Ignore reception with void cast
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    SPI1TCNT = 1;
+    SPI1_ByteWrite(cmd);
+    while(!PIR3bits.SPI1RXIF); //__delay_us(16);
+    // while(SPI1CON2bits.BUSY) {/* // printf(".\n"): */ continue; }
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(cmd);
+    #endif
+    
+    DC1_SetHigh();
+
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+    SPI1_ByteWrite(b1);
+    SPI1_ByteWrite(b2);
+    SPI1_ByteWrite(b3);
+    // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(b1);
+    fast_spi_write_byte(b2);
+    fast_spi_write_byte(b3);
+    #endif
+
+    // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    CS1_SetHigh();
+}
+
+void ili9488_4byte_command(uint16_t len_cmd, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4)
+{
+    uint8_t len = (len_cmd >> 8) & 0xff;
+    uint8_t cmd = (len_cmd & 0xff);
+
+    if(len != 4) return;
+
+    CS1_SetLow(); // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    DC1_SetLow(); // Set command mode (DC pin is command when LOW and data when HIGH)
+    
+    // Ignore reception with void cast
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    SPI1TCNT = 1;
+    SPI1_ByteWrite(cmd);
+    while(!PIR3bits.SPI1RXIF); //__delay_us(16);
+    // while(SPI1CON2bits.BUSY) {/* // printf(".\n"): */ continue; }
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(cmd);
+    #endif
+    
+    DC1_SetHigh();
+
+    #ifdef HARDWARE_SPI
+    SPI1_Open(HOST_CONFIG);
+    // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+    SPI1_ByteWrite(b1);
+    SPI1_ByteWrite(b2);
+    SPI1_ByteWrite(b3);
+    SPI1_ByteWrite(b4);
+    // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+    SPI1_Close();
+    #else
+    fast_spi_write_byte(b1);
+    fast_spi_write_byte(b2);
+    fast_spi_write_byte(b3);
+    fast_spi_write_byte(b4);
+    #endif
+
+    // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+    CS1_SetHigh();
+}

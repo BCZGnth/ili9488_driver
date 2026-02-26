@@ -29,7 +29,7 @@
 // Arguments      : None
 // Return         : None
 // Conditions     : SPI1_RST pin must be correctly connected/configured
-void ili9488_reset(ili9488_interface_t interface)
+void ili9488_reset(ili9488_interface_t * interface)
 {
     // Execute hardware reset
     // *(interface.lcd_rst_port) &= ~(1 << interface.lcd_rst_pin);
@@ -45,7 +45,7 @@ void ili9488_reset(ili9488_interface_t interface)
 // Arguments      : None
 // Return         : Initialized interface
 // Conditions     : Must operate in SPI mode 3 (CKE=0, CKP=1, CPOL=1, CPHA=1)
-Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibuffer, uint8_t buffer_size)
+Ili9488Defines ili9488_initialize(ili9488_interface_t * interface, uint8_t * spibuffer, uint8_t buffer_size)
 {
     Ili9488Defines LCD = {
         .Screen = {
@@ -90,7 +90,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
                 .end_y = 319,
             }
         },
-        .interface = interface
+        .interface = *interface
     };
     
     #ifdef SOFTWARE_SPI
@@ -100,7 +100,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
 
     #endif
 
-    ili9488_reset(LCD.interface);
+    ili9488_reset(interface);
     __delay_ms(150); // See reset page (306-309) of datasheet. This is the longest necessary time needed after any hardware reset
     
 

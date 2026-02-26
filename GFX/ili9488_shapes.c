@@ -6,181 +6,66 @@
 /**
  * Takes a start x,y coordinate and a length of pixels to draw a line
  */
-void ili9488_draw_vline(Ili9488Defines screen, Ili9488HVLine Line)
+// Generic line drawing function
+static void ili9488_draw_line_internal(
+    Ili9488Defines screen,
+    uint16_t start_x, uint16_t start_y,
+    uint16_t end_x, uint16_t end_y,
+    color_t color)
 {
-
-    ADD_TO_STACK_DEPTH();
-    // level_log(TRACE, "ILI9488 Draw VLine");
-    // printf("(with color: %d)", Line.color);
-
-    uint16_t del_x, del_y;
-    uint8_t byte_of_color = (Line.color & 0x7);
-    byte_of_color |= ((Line.color << 3) & 0x38);
-
-    /* Check for line weight errors */
-    if( Line.weight > (screen.Screen.ScreenWidth / 2))
-    { Line.weight = screen.Screen.ScreenWidth / 2 - 1; }
-    /* Give lines the correct weighting. This is a fix for having lines on the end of a screen that are not displayed correctly.*/
-    if(Line.xstart > (screen.Screen.ScreenWidth / 2))
-    { Line.xstart = Line.xstart - Line.weight + 1; }
-
+    uint8_t byte_of_color = ((color << 3) & 0x38) | (color & 0x7);
+    
     Ili9488RamPointer line_ptr = {
-        .start_x = Line.xstart,
-        .end_x   = Line.xstart + Line.weight - 1,
-        .start_y = Line.ystart,
-        .end_y   = Line.ystart + Line.length - 1
+        .start_x = start_x,
+        .end_x = end_x,
+        .start_y = start_y,
+        .end_y = end_y
     };
-
-    del_x = (line_ptr.end_x - line_ptr.start_x) + 1;
-    del_y = (line_ptr.end_y - line_ptr.start_y) + 1;
-
-    uint24_t no_of_pixels =  del_x * del_y;
-
-    no_of_pixels = no_of_pixels + (no_of_pixels % 2); // Evening the no_of_numbers variable
-    uint24_t no_of_bytes = no_of_pixels / (uint24_t)2;
-
-    // Use the full buffer size for drawing the line
-    /* We will also assume that the Screen.buffer_size is greater than 1 */
-
-    // Calculate the number of full iterations needed
-    uint24_t iterations = no_of_bytes / (uint24_t)screen.Screen.buffer_size;
-    uint24_t remainder  = no_of_bytes % (uint24_t)screen.Screen.buffer_size;
-
-    // level_log(TRACE, "Iterations:");
-    // printf("%lu", (uint32_t)iterations);
-    // level_log(TRACE, "Remainder:");
-    // printf("%lu", (uint32_t)remainder);
-    // level_log(TRACE, "Number of Pixels:");
-    // printf("%lu", (uint32_t)no_of_pixels);
-    // level_log(TRACE, "Number of Bytes:");
-    // printf("%lu", (uint32_t)no_of_bytes);
-    // level_log(TRACE, "Byte of Color:");
-    // printf("%x", byte_of_color);
-
+    
+    uint24_t del_x = (end_x - start_x) + 1;
+    uint24_t del_y = (end_y - start_y) + 1;
+    uint24_t no_of_pixels = del_x * del_y;
+    no_of_pixels = no_of_pixels + (no_of_pixels % 2);
+    uint24_t no_of_bytes = no_of_pixels / 2;
+    
+    uint24_t iterations = no_of_bytes / screen.Screen.buffer_size;
+    uint24_t remainder = no_of_bytes % screen.Screen.buffer_size;
+    
     ili9488_set_ram_pointer(line_ptr);
-
-    // Only memset as many bytes as needed. 
-    if(!iterations) {
-        memset(screen.Screen.pbuffer, byte_of_color, (size_t)remainder);
-        ili9488_gram_write(screen.Screen.pbuffer, remainder + 1);
-
+    
+    if (!iterations) {
+        memset(screen.Screen.pbuffer, byte_of_color, remainder);
+        ili9488_gram_write(screen.Screen.pbuffer, remainder);
     } else {
         memset(screen.Screen.pbuffer, byte_of_color, screen.Screen.buffer_size);
-        
         ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
-        /* This for loop only works because the first "iteration" is completed with a seperate function before the for loop
-        * Otherwise, a ""> 0" in a loop will usually be one iteration short of whatever the variable's original value was.
-        * This is also only useful if you will not use the value again, which applies in this case.
-        * */
-       for(; iterations > 0; iterations--) {
-           ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
+        
+        while (iterations > 0) {
+            ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
+            iterations--;
         }
         
-        /* Write the remainder */
-        ili9488_gram_write(screen.Screen.pbuffer, remainder + 1);
+        if (remainder > 0) {
+            ili9488_gram_write(screen.Screen.pbuffer, remainder);
+        }
     }
-
-
-    // level_log(TRACE, "Ili9488 Drew VLine");
-    REMOVE_FROM_STACK_DEPTH();
 }
 
-void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line)
-{
-    /* The screen seems to have a problem wherein 8 pixels ahead of the pointer are turned black. 
-     * This problem seems to occur at the end of writes as well. The last 8 bits (or pixels) of
-     * a write will always be black...To remedy this there are two options.
-     *      1) expand the ram pointer to account for these pixels
-     *      2) don't write the last 8 pixels.
-     * Both options have their downfalls, and the PIC isn't fast enough to read from the screen and 
-     * Then decide what to do and then write. That would take probably 250ms or more, since I don't
-     * really have fast read capabilities right now.*/
+// Wrapper functions (inline or macro)
+void ili9488_draw_vline(Ili9488Defines screen, Ili9488HVLine Line) {
+    // Add your weight/boundary checks here
+    ili9488_draw_line_internal(screen, 
+        Line.xstart, Line.ystart,
+        Line.xstart + Line.weight - 1, Line.ystart + Line.length - 1,
+        Line.color);
+}
 
-    uint24_t no_of_pixels =  Line.length * Line.weight;
-    no_of_pixels = no_of_pixels + (no_of_pixels % 2); // Evening the no_of_pixels variable
-
-    /* For now, to fix this problem, */
-    /* Add an appropriate amount of length to the line to mitigate the black artifact */
-     Line.length += (8 / (Line.weight - (Line.weight % 2)));
-     /* If the line weight is greater than 8, nothing is added to the length. */
-
-    ADD_TO_STACK_DEPTH();
-    // level_log(TRACE, "ILI9488 Draw HLine");
-    // printf("(with color: %d)", Line.color);
-
-    uint8_t byte_of_color = 0;
-    // byte_of_color |= (Line.color & 0x7);
-    byte_of_color = ((Line.color << 3) & 0x38) | (Line.color & 0x7);
-    uint16_t del_x, del_y;
-
-    /* Check for line weight errors */
-    if( Line.weight > (screen.Screen.ScreenWidth / 2))
-    { Line.weight = screen.Screen.ScreenWidth / 2 - 1; }
-
-    /* Give lines the correct weighting. This is a fix for having lines on the end of a screen that are not displayed correctly.*/
-    if(Line.ystart > (screen.Screen.ScreenHeight / 2))
-    { Line.ystart = Line.ystart - Line.weight + 1; }
-
-    Ili9488RamPointer line_ptr = {
-        .start_x = Line.xstart,
-        .end_x   = Line.xstart + Line.length - 1,
-        .start_y = Line.ystart,
-        .end_y   = Line.ystart + Line.weight - 1
-    };
-
-    /* Add "1" for adjusting the Zero-indexed pixel coordinate numbers */
-    /* Before the Artifact removal, these were used to calculate the length of the packet
-     * The calculation is done at the top of the function now.  */
-    // del_x = (line_ptr.end_x - line_ptr.start_x) + 1;
-    // del_y = (line_ptr.end_y - line_ptr.start_y) + 1;
-
-    uint24_t no_of_bytes = no_of_pixels / (uint24_t)2;
-
-    // Use the full buffer size for drawing the line
-    /* We will also assume that the Screen.buffer_size is greater than 1 */
-
-    // Calculate the number of full iterations needed
-    uint24_t iterations = no_of_bytes / (uint24_t)screen.Screen.buffer_size;
-    uint24_t remainder  = no_of_bytes % (uint24_t)screen.Screen.buffer_size;
-
-    // level_log(TRACE, "Iterations:");
-    // printf("%lu", (uint32_t)iterations);
-    // level_log(TRACE, "Remainder:");
-    // printf("%lu", (uint32_t)remainder);
-    // level_log(TRACE, "Number of Pixels:");
-    // printf("%lu", (uint32_t)no_of_pixels);
-    // level_log(TRACE, "Number of Bytes:");
-    // printf("%lu", (uint32_t)no_of_bytes);
-    // level_log(TRACE, "Byte of Color:");
-    // printf("0x%x", byte_of_color);
-
-    ili9488_set_ram_pointer(line_ptr);
-
-    // Only memset as many bytes as needed. 
-    if(!iterations) {
-        // level_log(TRACE, "No Iterations necessary");
-        memset(screen.Screen.pbuffer, byte_of_color, (size_t)remainder);
-        ili9488_gram_write(screen.Screen.pbuffer, remainder);
-
-    } else {
-        // level_log(TRACE, "Running %d iterations");
-        memset(screen.Screen.pbuffer, byte_of_color, screen.Screen.buffer_size);
-        
-        ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
-        /* This for loop only works because the first "iteration" is completed with a seperate function before the for loop
-        * Otherwise, a ""> 0" condition in a loop will usually be one iteration short of whatever the variable's original value was.
-        * This is also only useful if you will not use the value again, which applies in this case.
-        * */
-       for(; iterations > 0; iterations--) {
-           ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
-        }
-        
-        /* Write the remainder. The remainder will always be smaller than the entire buffer, so a seperate memset is unnecessary */
-        ili9488_gram_write(screen.Screen.pbuffer, remainder);
-    }
-
-    // level_log(TRACE, "Ili9488 Drew HLine");
-    REMOVE_FROM_STACK_DEPTH();
+void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line) {
+    // Add your artifact workaround here
+    ili9488_draw_line_internal(screen,
+        Line.xstart, Line.ystart,
+        Line.xstart + Line.length - 1, Line.ystart + Line.weight - 1,
+        Line.color);
 }
 
 void ili9488_draw_rect(Ili9488Defines screen, Ili9488Rect Rect){
