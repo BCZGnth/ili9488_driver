@@ -463,30 +463,6 @@ size_t ili9488_print(Ili9488Defines* screen, Ili9488Print* args) {
     uint8_t word_length;
 
     Ili9488RamPointer char_placement;
-    // Glyph char_attrs = {
-    //     .character = '\0',
-    //     .height = char_bit_height_2x,
-    //     .width = char_bit_width_2x,
-    // };
-
-    /* Error Checks */
-    // Length is zero
-    // if(!args.length) {
-    //     // level_log(ERROR, "type <Ili9488Print> args.length not defined");
-    //     return 0;
-    // }
-    // // If the bytes length will be larger than the buffer size
-    // if(write_size >  Screen.buffer_size) {
-    //     // level_log(ERROR, "Buffer Size Too Small");
-    //     return 0;
-    // }
-
-    /* Constrain the columns so that we skip the first and last. This way frames don't get overwritten */
-    // if(preserve_frame){
-    //     ILI9488_SendCommand(screen.interface, SET_COLUMN_ADDRESS, 1, 126);
-    // }
-
-    // ili9488_set_ram_pointer(screen.interface, args.ram_ptr); // Put the cursor where specified in the args structure
 
     /** Loading the I2C buffer */
     /** No scaling applied, and the message is copied into the i2c buffer */
@@ -578,12 +554,7 @@ size_t ili9488_print(Ili9488Defines* screen, Ili9488Print* args) {
 
         yoff = (char_height * row_increment);
         if(yoff + char_height >= box_height) {
-            // if ((yoff + (write_height * 2)) > box_height) {
-            //     break;
-            // }
-            // else if (write_height == box_height - yoff - 1) {
-            //     break;
-            // }
+
             // Constrain char_height to only go to the bottom of the box
             // The unfortunate problem with this solution is that it does not allow for the correct pixels to be written at the correct places in the smaller box
             

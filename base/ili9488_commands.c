@@ -9,65 +9,65 @@
 // Arguments      : data -> Command to send (1 byte)
 // Return         : None
 // Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
-void ili9488_send_command(uint16_t len_cmd, ...)
-{
-    uint8_t len = (len_cmd >> 8) & 0xff;
-    uint8_t cmd = (len_cmd & 0xff);
-    uint8_t data;
+// void ili9488_send_command(uint16_t len_cmd, ...)
+// {
+//     uint8_t len = (len_cmd >> 8) & 0xff;
+//     uint8_t cmd = (len_cmd & 0xff);
+//     uint8_t data;
     
-    // Create the variadic list and start the 
-    va_list params;
-    // Begin the reading of the variadic arguments
-    va_start(params, uint16_t);
+//     // Create the variadic list and start the 
+//     va_list params;
+//     // Begin the reading of the variadic arguments
+//     va_start(params, uint16_t);
 
-    // printf("len is %d\n", len);
+//     // printf("len is %d\n", len);
     
-    // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    CS1_SetLow();
-    // Set command mode (DC pin is command when LOW and data when HIGH)
-    DC1_SetLow();
+//     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+//     CS1_SetLow();
+//     // Set command mode (DC pin is command when LOW and data when HIGH)
+//     DC1_SetLow();
     
-    // Ignore reception with void cast
-    #ifdef HARDWARE_SPI
-    SPI1_Open(HOST_CONFIG);
-    SPI1TCNT = 1;
-    SPI1_ByteWrite(cmd);
-    while(!PIR3bits.SPI1RXIF); //__delay_us(16);
-    // while(SPI1CON2bits.BUSY) {/* // printf(".\n"): */ continue; }
-    SPI1_Close();
-    #else
-    fast_spi_write_byte(cmd);
-    #endif
+//     // Ignore reception with void cast
+//     #ifdef HARDWARE_SPI
+//     SPI1_Open(HOST_CONFIG);
+//     SPI1TCNT = 1;
+//     SPI1_ByteWrite(cmd);
+//     while(!PIR3bits.SPI1RXIF); //__delay_us(16);
+//     // while(SPI1CON2bits.BUSY) {/* // printf(".\n"): */ continue; }
+//     SPI1_Close();
+//     #else
+//     fast_spi_write_byte(cmd);
+//     #endif
     
 
-    // Set the dc pin high again for the data portion of the transmit
-    DC1_SetHigh();
+//     // Set the dc pin high again for the data portion of the transmit
+//     DC1_SetHigh();
 
-    if(len) {
-        // Iterate for as many bytes as the command expects
-        for(uint8_t blah = 0; blah < len; blah++)
-        {
-            data = va_arg(params, uint8_t);
-            // // printf("Send data: %d at index %d\n", data[blah], blah);
+//     if(len) {
+//         // Iterate for as many bytes as the command expects
+//         for(uint8_t blah = 0; blah < len; blah++)
+//         {
+//             data = va_arg(params, uint8_t);
+//             // // printf("Send data: %d at index %d\n", data[blah], blah);
             
             
-            #ifdef HARDWARE_SPI
-            SPI1_Open(HOST_CONFIG);
-            // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
-            SPI1_BufferWrite(data, len);
-            // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
-            SPI1_Close();
-            #else
-            fast_spi_write_byte(data);
-            #endif
-        }
+//             #ifdef HARDWARE_SPI
+//             SPI1_Open(HOST_CONFIG);
+//             // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+//             SPI1_BufferWrite(data, len);
+//             // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+//             SPI1_Close();
+//             #else
+//             fast_spi_write_byte(data);
+//             #endif
+//         }
         
-    }
+//     }
     
-    va_end(params);
-    // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    CS1_SetHigh();
-}
+//     va_end(params);
+//     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
+//     CS1_SetHigh();
+// }
 
 /* Function name   : ILI9488_SendData
  * Functionality  : Send 1 byte data to ILI9488
@@ -197,13 +197,13 @@ void ili9488_set_ram_pointer(Ili9488RamPointer args)
     uint8_t start_lsb = (args.start_y & 0xff);
     uint8_t end_msb   = (args.end_y >> 8) & 0xff;
     uint8_t end_lsb   = (args.end_y & 0xff);
-    ili9488_send_command(ILI9488_COLUMN_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
+    ili9488_4byte_command(ILI9488_COLUMN_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 
     start_msb = (args.start_x >> 8) & 0xff;
     start_lsb = (args.start_x & 0xff);
     end_msb   = (args.end_x >> 8) & 0xff;
     end_lsb   = (args.end_x & 0xff);
-    ili9488_send_command(ILI9488_PAGE_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
+    ili9488_4byte_command(ILI9488_PAGE_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 }
 
 void ili9488_gram_write(uint8_t * pbuf, uint24_t len)
