@@ -152,7 +152,7 @@
 // void ili9488_send_command(uint16_t cmd, ...);
 
 // Send data to ILI9488 (received value is ignored)
-void ili9488_send_data(uint8_t* pdata, size_t data_length);
+// void ili9488_send_data(uint8_t* pdata, size_t data_length);
 void ili9488_0byte_command(uint16_t cmd);
 void ili9488_1byte_command(uint16_t cmd, uint8_t b1);
 void ili9488_2byte_command(uint16_t cmd, uint8_t b1, uint8_t b2);
