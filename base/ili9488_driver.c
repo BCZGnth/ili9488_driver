@@ -107,7 +107,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t * interface, uint8_t * spi
     ili9488_2byte_command(ILI9488_POWER_CONTROL_1, 0x17, 
                                                             0x15);            //Power Control 1
     
-    ili9488_2byte_command(ILI9488_POWER_CONTROL_2, 0x15);           //Power Control 2
+    ili9488_1byte_command(ILI9488_POWER_CONTROL_2, 0x15);           //Power Control 2
     
     ili9488_1byte_command(ILI9488_POWER_CONTROL_4, 0x00);           //Power Control 3
     
