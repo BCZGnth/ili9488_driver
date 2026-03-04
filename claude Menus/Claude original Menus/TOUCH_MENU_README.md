@@ -295,11 +295,11 @@ uint8_t touch_menu_process_touch(TouchMenu* menu, Touch touch) {
     // ... existing code ...
     
     // Debug: Print touch coordinates
-    printf("Touch at X=%u, Y=%u\n", touch.x, touch.y);
+    // printf("Touch at X=%u, Y=%u\n", touch.x, touch.y);
     
     // Debug: Print box boundaries
     for (uint8_t i = 0; i < box_count; i++) {
-        printf("Box %u: xs=%u xe=%u ys=%u ye=%u\n", 
+        // printf("Box %u: xs=%u xe=%u ys=%u ye=%u\n", 
                i, boxes[i].xs, boxes[i].xe, boxes[i].ys, boxes[i].ye);
     }
     
@@ -380,7 +380,7 @@ Use RAM buffers for changing text:
 static char status_text[30];
 
 void update_status_menu(void) {
-    sprintf(status_text, "Battery: %d%%", get_battery_level());
+    s// printf(status_text, "Battery: %d%%", get_battery_level());
     // Menu item points to status_text
 }
 ```

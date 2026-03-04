@@ -61,48 +61,48 @@
 //     ili9488_draw_hline(screen.Screen, underscore);
 // }
 
-void h2o_outline(Ili9488Defines screen) {
+void h2o_outline(Ili9488Defines * screen) {
 
     Ili9488Print h2o_connected = {
         .text = "H2O Disconnected",
         .ram_ptr = {
-            .start_x = (screen.Screen.ScreenWidth - 204) / 2,
-            .end_x = (screen.Screen.ScreenWidth - 204) / 2 + 204,
-            .start_y = (screen.Screen.ScreenHeight / 4),
-            .end_y = (screen.Screen.ScreenHeight / 4) + screen.Screen.offset_2x.height
+            .start_x = (screen->Screen.ScreenWidth - 204) / 2,
+            .end_x = (screen->Screen.ScreenWidth - 204) / 2 + 204,
+            .start_y = (screen->Screen.ScreenHeight / 4),
+            .end_y = (screen->Screen.ScreenHeight / 4) + screen->Screen.offset_2x.height
         },
         .fg = YELLOW,
-        .font = screen.Screen.offset_2x,
+        .font = screen->Screen.offset_2x,
     };
 
     Ili9488Rect full_outline = {
         .xstart = 0,
-        .xend = screen.Screen.ScreenWidth - 1,
+        .xend = screen->Screen.ScreenWidth - 1,
         .ystart = 0,
-        .yend = screen.Screen.ScreenHeight - 1,
+        .yend = screen->Screen.ScreenHeight - 1,
         .weight = 3,
         .color = MAGENTA,
     };
 
-    ili9488_draw_rect(screen, full_outline);
-    ili9488_print(screen, h2o_connected);
+    ili9488_draw_rect(screen, &full_outline);
+    ili9488_print(screen, &h2o_connected);
 }
 
-void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
+void generic_payload_frame(Ili9488Defines * screen, uint32_t serial_number)
 {
     Ili9488Print ser_num = {
         .text = "SER_NUM = ",
         .ram_ptr = {
-            .start_x = (screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2,
-            .end_x =  ((screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2) + 10 * screen.Screen.offset_2x.width_pad,
+            .start_x = (screen->Screen.ScreenWidth - (20 * screen->Screen.offset_2x.width_pad)) / 2,
+            .end_x =  ((screen->Screen.ScreenWidth - (20 * screen->Screen.offset_2x.width_pad)) / 2) + 10 * screen->Screen.offset_2x.width_pad,
             .start_y = 4,
-            .end_y = 4 + screen.Screen.character.height
+            .end_y = 4 + screen->Screen.character.height
         },
         // .scale = 1,
         // .delay = 0
         .line_spacing = 0,
         .fg = BLUE, 
-        .font = screen.Screen.offset_2x,
+        .font = screen->Screen.offset_2x,
     };
 
     /* Print Serial number */
@@ -111,19 +111,19 @@ void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
         .right_aligned = 1,
         .data = (int32_t)serial_number,
         .ram_ptr = {
-            .start_x = ((screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2) + 10 * screen.Screen.offset_2x.width_pad + 1,
-            .end_x =   ((screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2) + 20 * screen.Screen.offset_2x.width_pad + 1,
+            .start_x = ((screen->Screen.ScreenWidth - (20 * screen->Screen.offset_2x.width_pad)) / 2) + 10 * screen->Screen.offset_2x.width_pad + 1,
+            .end_x =   ((screen->Screen.ScreenWidth - (20 * screen->Screen.offset_2x.width_pad)) / 2) + 20 * screen->Screen.offset_2x.width_pad + 1,
             .start_y = 4,
-            .end_y = 4 + screen.Screen.character.height
+            .end_y = 4 + screen->Screen.character.height
         },
         // .scale = 1,
         .fg = RED,
-        .font = screen.Screen.offset_2x
+        .font = screen->Screen.offset_2x
     };
 
     Ili9488HVLine serial_underline = {
         .color = WHITE,
-        .length = screen.Screen.ScreenWidth - 1,
+        .length = screen->Screen.ScreenWidth - 1,
         .xstart = 0,
         .ystart = 22,
         .weight = 2,
@@ -134,17 +134,17 @@ void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
         .weight = 3,
         .xstart = 0,
         .ystart = 0,
-        .xend = screen.Screen.ScreenWidth - 1,
-        .yend = screen.Screen.ScreenHeight - 1,
+        .xend = screen->Screen.ScreenWidth - 1,
+        .yend = screen->Screen.ScreenHeight - 1,
     };
 
-    ili9488_draw_hline(  screen, serial_underline);
-    ili9488_draw_rect(   screen, white_border);
-    ili9488_print(       screen, ser_num);
-    ili9488_write_number(screen, ser_val);
+    ili9488_draw_hline(  screen, &serial_underline);
+    ili9488_draw_rect(   screen, &white_border);
+    ili9488_print(       screen, &ser_num);
+    ili9488_write_number(screen, &ser_val);
 }
 
-void pretty_payload_frame(Ili9488Defines screen, uint24_t serial_number)
+void pretty_payload_frame(Ili9488Defines * screen, uint24_t serial_number)
 {
 
 
@@ -185,8 +185,8 @@ void pretty_payload_frame(Ili9488Defines screen, uint24_t serial_number)
         .scale = 1,
     };
 
-    ili9488_write_number(screen, ser_val);
-    ili9488_draw_rect(   screen, full_outline);
-    ili9488_print(       screen, SerNUM);
-    ili9488_draw_hline(  screen, ser_num_underline);
+    ili9488_write_number(screen, &ser_val);
+    ili9488_draw_rect(   screen, &full_outline);
+    ili9488_print(       screen, &SerNUM);
+    ili9488_draw_hline(  screen, &ser_num_underline);
 }

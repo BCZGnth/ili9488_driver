@@ -28,12 +28,12 @@
 // }
 
 /** 
- * An alternative to snprintf:
+ * An alternative to sn// printf:
  * 
  */
 
  // Ultra-compact int32 to string converter (saves 8-10KB!)
-static uint8_t int32_to_str(int32_t num, char* buf, uint8_t bufsize) {
+uint8_t int32_to_str(int32_t num, char* buf, uint8_t bufsize) {
     uint8_t i = 0;
     uint8_t negative = 0;
     
@@ -221,7 +221,7 @@ void ili9488_write_bitmap(Ili9488Defines * screen, Ili9488Bitmap * args) {
     ili9488_set_ram_pointer(args->ram_ptr);
 
     size_t write_len = load_bitmap_3bit(args->color, screen->Screen.pbuffer, screen->Screen.buffer_size, args->pbitmap, args->buf_len, args->height, args->width);
-    printf("the buffer length is: %u\n", write_len);
+    // printf("the buffer length is: %u\n", write_len);
 
     // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers->)
     ili9488_gram_write(screen->Screen.pbuffer, write_len);
@@ -233,10 +233,7 @@ void ili9488_fill_color(Ili9488Defines * screen, Ili9488RamPointer * args, color
     ADD_TO_STACK_DEPTH();
     // level_log(TRACE, "Filling a block");
 
-    color_t color = 0;
-    color |= (color & 0x7);
-    color = color << 3;
-    color |= (color & 0x7);
+    color_t byte_color = (color & 0x7) << 3 | (color & 0x7);
 
     uint24_t block_height = args->end_y - args->start_y + 1;
     uint24_t block_width = args->end_x - args->start_x + 1; 
@@ -365,7 +362,7 @@ size_t ili9488_write_number(Ili9488Defines * screen, Ili9488WriteNumber * args) 
      * Use sn// printf because it allows overwrite protection that always ends in a null terminator
      */
     number_of_chars_written = int32_to_str(args->data, &data_to_write[0], MAX_NUMBER_OF_CHARS);
-    // number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args->data); // putting zeros at the end of the string so that it is less noise to the viewer
+    // number_of_chars_written = sn// printf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args->data); // putting zeros at the end of the string so that it is less noise to the viewer
     if(number_of_chars_written <= 0) {
         // level_log(ERROR, "sn// printf call did not write data to a buffer. Possibly you have a bad args.data");
     }
@@ -576,7 +573,7 @@ size_t ili9488_print(Ili9488Defines * screen, Ili9488Print * args) {
         if (write_len > screen->Screen.buffer_size) {
             write_len = screen->Screen.buffer_size;
         }
-        // // level_log(TRACE, "Write Length is: %d", write_len);
+        // level_log(TRACE, "Write Length is: %d", write_len);
         ili9488_gram_write(screen->Screen.pbuffer, write_len);
         
         /* We may potentially want to make word boundary aware printing...but not today.*/

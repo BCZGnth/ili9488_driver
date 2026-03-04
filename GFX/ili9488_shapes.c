@@ -14,6 +14,9 @@ static void ili9488_draw_line_internal(
     color_t color)
 {
     uint8_t byte_of_color = ((color << 3) & 0x38) | (color & 0x7);
+
+    // Note: The artifact compensation does not account for lines that have perfect multiple of 8 pixels.
+    uint8_t artifact_compensation_bytes = 1;
     
     Ili9488RamPointer line_ptr = {
         .start_x = start_x,
@@ -26,7 +29,7 @@ static void ili9488_draw_line_internal(
     uint24_t del_y = (end_y - start_y) + 1;
     uint24_t no_of_pixels = del_x * del_y;
     no_of_pixels = no_of_pixels + (no_of_pixels % 2);
-    uint24_t no_of_bytes = no_of_pixels / 2;
+    uint24_t no_of_bytes = no_of_pixels / 2 + artifact_compensation_bytes;
     
     uint24_t iterations = no_of_bytes / screen->Screen.buffer_size;
     uint24_t remainder = no_of_bytes % screen->Screen.buffer_size;
@@ -35,6 +38,9 @@ static void ili9488_draw_line_internal(
     
     if (!iterations) {
         memset(screen->Screen.pbuffer, byte_of_color, remainder);
+        // Make sure the artifact on the screen is taken care of as much as possible:
+        memset(screen->Screen.pbuffer + remainder - artifact_compensation_bytes, 0, artifact_compensation_bytes);
+
         ili9488_gram_write(screen->Screen.pbuffer, remainder);
     } else {
         memset(screen->Screen.pbuffer, byte_of_color, screen->Screen.buffer_size);
@@ -46,6 +52,8 @@ static void ili9488_draw_line_internal(
         }
         
         if (remainder > 0) {
+            // Make sure the artifact on the screen is taken care of as much as possible:
+            memset(screen->Screen.pbuffer + remainder - artifact_compensation_bytes, 0, artifact_compensation_bytes);
             ili9488_gram_write(screen->Screen.pbuffer, remainder);
         }
     }
@@ -54,6 +62,16 @@ static void ili9488_draw_line_internal(
 // Wrapper functions (inline or macro)
 void ili9488_draw_vline(Ili9488Defines * screen, Ili9488HVLine * Line) {
     // Add your weight/boundary checks here
+    if(Line->xstart < 0) Line->xstart = 0;
+    if(Line->xstart >= screen->Screen.ScreenWidth) Line->xstart = screen->Screen.ScreenWidth - 1;
+    if(Line->xstart + Line->length >= screen->Screen.ScreenWidth) return;
+
+    // Make sure we draw the "weight" on the correct side of the line
+    if(Line->xstart > screen->Screen.ScreenWidth / 2) {
+        // Decrement by the weight to make sure the full line is drawn on the edges of the screen
+        Line->xstart -= Line->weight;
+    }
+
     ili9488_draw_line_internal(screen, 
         Line->xstart, Line->ystart,
         Line->xstart + Line->weight - 1, Line->ystart + Line->length - 1,
@@ -61,7 +79,17 @@ void ili9488_draw_vline(Ili9488Defines * screen, Ili9488HVLine * Line) {
 }
 
 void ili9488_draw_hline(Ili9488Defines * screen, Ili9488HVLine * Line) {
-    // Add your artifact workaround here
+    // Add your weight/boundary checks here
+    if(Line->ystart < 0) Line->ystart = 0;
+    if(Line->ystart >= screen->Screen.ScreenHeight) Line->ystart = screen->Screen.ScreenHeight - 1;
+    if(Line->ystart + Line->length >= screen->Screen.ScreenHeight) return;
+
+    // Make sure we draw the "weight" on the correct side of the line
+    if(Line->ystart > screen->Screen.ScreenHeight / 2) {
+        // Decrement by the weight to make sure the full line is drawn on the edges of the screen
+        Line->ystart -= Line->weight;
+    }
+
     ili9488_draw_line_internal(screen,
         Line->xstart, Line->ystart,
         Line->xstart + Line->length - 1, Line->ystart + Line->weight - 1,

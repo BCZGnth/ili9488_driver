@@ -4,7 +4,7 @@
 #include "ili9488_shapes.h"
 #include <string.h>
 
-void debug_draw_add_menu(Ili9488Defines screen) {
+void debug_draw_add_menu(Ili9488Defines * screen) {
     
     ili9488_cls(screen);
     
@@ -12,22 +12,22 @@ void debug_draw_add_menu(Ili9488Defines screen) {
     Ili9488Rect outline = {
         .xstart = 0,
         .ystart = 0,
-        .xend = screen.Screen.ScreenWidth - 1,
-        .yend = screen.Screen.ScreenHeight - 1,
+        .xend = screen->Screen.ScreenWidth - 1,
+        .yend = screen->Screen.ScreenHeight - 1,
         .weight = 4,
         .color = CYAN,
-    };
+    };  
 
     Ili9488HVLine splitter = {
         .xstart = 4,
         .ystart = 60,
         .weight = 4,
-        .length = screen.Screen.ScreenWidth - 9, // Account for the weight of the previous border on either side with the addition of one to account for a zero-indexed numbering system for the screen
+        .length = screen->Screen.ScreenWidth - 9, // Account for the weight of the previous border on either side with the addition of one to account for a zero-indexed numbering system for the screen
         .color = CYAN,
     };
 
-    ili9488_draw_rect(screen, outline);
-    ili9488_draw_hline(screen, splitter);
+    ili9488_draw_rect(screen, &outline);
+    ili9488_draw_hline(screen, &splitter);
 
 
     /* The Circles will each take up 102 pixels in diameter. 
@@ -37,8 +37,8 @@ void debug_draw_add_menu(Ili9488Defines screen) {
      /* Use a loop to draw the circles that will make up the numberpad */
     uint16_t circ_x_start = 4 + 51; // Circle Radius plus the offset for the border
     uint16_t circ_y_start = 24 + 51; // Circle Radius plus the offset for the split between the numberpad and the display area
-    uint16_t num_x_start = circ_x_start - (screen.Screen.offset_2x.width / 2);
-    uint16_t num_y_start = circ_y_start - (screen.Screen.offset_2x.height / 2);
+    uint16_t num_x_start = circ_x_start - (screen->Screen.offset_2x.width / 2);
+    uint16_t num_y_start = circ_y_start - (screen->Screen.offset_2x.height / 2);
     uint16_t step = 102;
     static const char* numbers[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "x", "0", "+"};
     // const char* numbers = "123456789x0+";
@@ -63,12 +63,12 @@ void debug_draw_add_menu(Ili9488Defines screen) {
     Ili9488Print circ_txt = {
         // .text = &(num_to_print[0]),
         .fg = GREEN,
-        .font = screen.Screen.offset_2x,
+        .font = screen->Screen.offset_2x,
         .ram_ptr = {
             .start_x = num_x_start,
             .start_y = num_y_start,
-            .end_x = num_x_start + screen.Screen.offset_2x.width,
-            .end_y = num_y_start + screen.Screen.offset_2x.height,
+            .end_x = num_x_start + screen->Screen.offset_2x.width,
+            .end_y = num_y_start + screen->Screen.offset_2x.height,
         },
     };
 
@@ -83,10 +83,10 @@ void debug_draw_add_menu(Ili9488Defines screen) {
             // ili9488_draw_circle(circ);
 
             rect.xstart = add_touch_boxes[column + (3*row)].xs;
-            rect.xend =   add_touch_boxes[column + (3*row)].xe;
+            rect.xend   = add_touch_boxes[column + (3*row)].xe;
             rect.ystart = add_touch_boxes[column + (3*row)].ys;
-            rect.yend =   add_touch_boxes[column + (3*row)].ye;
-            ili9488_draw_rect(screen, rect);
+            rect.yend   = add_touch_boxes[column + (3*row)].ye;
+            ili9488_draw_rect(screen, &rect);
             
 
             // num_to_print[0] = *numbers;
@@ -95,42 +95,42 @@ void debug_draw_add_menu(Ili9488Defines screen) {
             circ_txt.ram_ptr.end_x   = add_touch_boxes[column + (3*row)].xe; // num_y_start + (step * row);
             circ_txt.ram_ptr.start_y = add_touch_boxes[column + (3*row)].ys + step / 2; // num_x_start + screen.Screen.offset_2x.width + (step * column);
             circ_txt.ram_ptr.end_y   = add_touch_boxes[column + (3*row)].ye; // num_y_start + screen.Screen.offset_2x.height + (step * row);
-            ili9488_print(screen, circ_txt);
+            ili9488_print(screen, &circ_txt);
 
             // numbers++;
         }
     }
 }
 
-void debug_draw_main_menu(Ili9488Defines screen) {
+void debug_draw_main_menu(Ili9488Defines * screen) {
     ili9488_cls(screen);
     
     /* Draw the Frame that will seperate the number pad from the text display */
     Ili9488Rect outline = {
         .xstart = 0,
         .ystart = 0,
-        .xend = screen.Screen.ScreenWidth - 1,
-        .yend = screen.Screen.ScreenHeight - 1,
+        .xend = screen->Screen.ScreenWidth - 1,
+        .yend = screen->Screen.ScreenHeight - 1,
         .weight = 4,
         .color = CYAN,
     };
 
     Ili9488HVLine splitter = {
         .xstart = 4,
-        .ystart = screen.Screen.ScreenHeight - 126,
+        .ystart = screen->Screen.ScreenHeight - 126,
         .weight = 4,
-        .length = screen.Screen.ScreenWidth - 9, // Account for the weight of the previous border on either side with the addition of one to account for a zero-indexed numbering system for the screen
+        .length = screen->Screen.ScreenWidth - 9, // Account for the weight of the previous border on either side with the addition of one to account for a zero-indexed numbering system for the screen
         .color = CYAN,
     };
 
-    ili9488_draw_rect(screen, outline);
-    ili9488_draw_hline(screen, splitter);
+    ili9488_draw_rect(screen, &outline);
+    ili9488_draw_hline(screen, &splitter);
 
     /* Use a loop to draw the circles that will make up the numberpad */
     uint16_t circ_x_start = 4 + 51; // Circle Radius plus the offset for the border
-    uint16_t circ_y_start = screen.Screen.ScreenHeight - 51 - 4; // Circle Radius plus the offset for the border which is 4 pixels wide
-    uint16_t num_x_start = circ_x_start - (screen.Screen.offset_2x.width / 2);
-    uint16_t num_y_start = circ_y_start - (screen.Screen.offset_2x.height / 2);
+    uint16_t circ_y_start = screen->Screen.ScreenHeight - 51 - 4; // Circle Radius plus the offset for the border which is 4 pixels wide
+    uint16_t num_x_start = circ_x_start - (screen->Screen.offset_2x.width / 2);
+    uint16_t num_y_start = circ_y_start - (screen->Screen.offset_2x.height / 2);
     uint16_t step = 102;
     static const char* button_txt[] = {"EXIT", "CLEAR", "ADD"};
     // char num_to_print[2] = {*numbers, '\0'};
@@ -154,12 +154,12 @@ void debug_draw_main_menu(Ili9488Defines screen) {
     Ili9488Print circ_txt = {
         // .text = button_txt[0],
         .fg = GREEN,
-        .font = screen.Screen.offset_2x,
+        .font = screen->Screen.offset_2x,
         .ram_ptr = {
             .start_x = num_x_start,
             .start_y = num_y_start,
-            .end_x = num_x_start + screen.Screen.offset_2x.width,
-            .end_y = num_y_start + screen.Screen.offset_2x.height,
+            .end_x = num_x_start + screen->Screen.offset_2x.width,
+            .end_y = num_y_start + screen->Screen.offset_2x.height,
         },
 
     };
@@ -167,7 +167,7 @@ void debug_draw_main_menu(Ili9488Defines screen) {
     /* Draw the three Circles */
     for(uint8_t column = 0; column < 3; column++) {
         uint8_t text_length = strlen(button_txt[column]);
-        text_length *= screen.Screen.offset_10x7.width_pad; 
+        text_length *= screen->Screen.offset_10x7.width_pad; 
 
         circ_txt.text = button_txt[column];
         circ_txt.ram_ptr.start_x = circ_x_start - (text_length / 2) + (step * column);
@@ -181,9 +181,9 @@ void debug_draw_main_menu(Ili9488Defines screen) {
         rect.ystart = main_touch_boxes[column].ys;
         rect.yend =   main_touch_boxes[column].ye;
 
-        ili9488_draw_rect(screen, rect);
+        ili9488_draw_rect(screen, &rect);
 
-        ili9488_print(screen, circ_txt);
+        ili9488_print(screen, &circ_txt);
     }
 
 }

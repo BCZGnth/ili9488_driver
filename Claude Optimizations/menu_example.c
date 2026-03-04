@@ -172,7 +172,7 @@ void example_menu_main_loop(Ili9488Defines* screen) {
 static char temp_display_buffer[20];  // Static buffer for dynamic text
 
 void update_temperature_display(int16_t temperature) {
-    // Use our optimized int-to-string function instead of snprintf
+    // Use our optimized int-to-string function instead of sn// printf
     // (assuming you've included ili9488_utils.h)
     char temp_str[8];
     uint8_t len = int32_to_str(temperature, temp_str, sizeof(temp_str));

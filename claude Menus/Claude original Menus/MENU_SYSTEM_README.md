@@ -20,7 +20,7 @@ This menu system provides a complete, space-efficient implementation for your PI
 5. `main_menu_integration.c` - Complete integration example with button handling
 
 ### Optimization Helpers
-6. `ili9488_utils.h` - Optimized utility functions (snprintf replacement, etc.)
+6. `ili9488_utils.h` - Optimized utility functions (sn// printf replacement, etc.)
 7. `ili9488_commands_optimized.h` - Optimized command definitions
 
 ## Menu Structure
@@ -313,7 +313,7 @@ If you need to display changing values (sensor data, status, etc.), you can use 
 static char temp_menu_text[20];
 
 void update_temperature_menu_item(int16_t temp) {
-    // Use your custom int-to-string function (no snprintf!)
+    // Use your custom int-to-string function (no sn// printf!)
     char temp_str[8];
     uint8_t len = int32_to_str(temp, temp_str, sizeof(temp_str));
     

@@ -4,8 +4,8 @@
 #include "xpt2046.h"
 #include "ili9488_base.h"
 
-void debug_draw_add_menu(Ili9488Defines screen);
-void debug_draw_main_menu(Ili9488Defines screen);
+void debug_draw_add_menu(Ili9488Defines * screen);
+void debug_draw_main_menu(Ili9488Defines * screen);
 
 enum AddMenuKeys {
     ADD_BUTTON_ZERO,
@@ -31,11 +31,8 @@ enum MainMenuKeys {
 enum WhitelistMenuKeys {
     WHITELIST_CLEAR_SN_LIST,
     WHITELIST_ADD_SN,
-}
+};
 
-enum TransmitMenuKeys {
-    
-}
 static const TouchBox add_touch_boxes[] = {
     /* #1 */
     {
@@ -146,7 +143,7 @@ static const TouchBox main_touch_boxes[] = {
     },
     /* Add Serial Number */
     {
-        .key = MAIN_BUTTON_CLEAR_SN_LIST,
+        .key = MAIN_BUTTON_SERIAL_MENU,
         .xs = 109,
         .ys = 367,
         .xe = 210,
@@ -154,7 +151,7 @@ static const TouchBox main_touch_boxes[] = {
     },
     /* Clear SN List */
     {
-        .key = MAIN_BUTTON_ADD_SN,
+        .key = MAIN_BUTTON_TRANSMIT_MENU,
         .xs = 211,
         .ys = 367,
         .xe = 312,

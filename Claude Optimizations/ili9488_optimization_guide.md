@@ -7,14 +7,14 @@ Your current driver has several areas for optimization. Based on analysis of you
 
 ## Critical Optimizations (Highest Impact)
 
-### 1. **ELIMINATE snprintf - HUGE Savings (~8-12KB)**
+### 1. **ELIMINATE sn// printf - HUGE Savings (~8-12KB)**
 
 **Current Code (ili9488_api.c lines 220-280):**
 ```c
-snprintf(temp_text, sizeof(temp_text), "%ld", args.data);
+sn// printf(temp_text, sizeof(temp_text), "%ld", args.data);
 ```
 
-**Problem:** `snprintf` pulls in the entire printf library, which is **MASSIVE** on PIC18 (~8-12KB of flash).
+**Problem:** `sn// printf` pulls in the entire // printf library, which is **MASSIVE** on PIC18 (~8-12KB of flash).
 
 **Solution:** Write a custom integer-to-string function:
 
@@ -225,8 +225,8 @@ ili9488_cmd_end();
 
 **Lines to strip:**
 - All `ADD_TO_STACK_DEPTH()` / `REMOVE_FROM_STACK_DEPTH()`
-- All commented-out `printf()` statements
-- All `level_log()` calls
+- All commented-out `// printf()` statements
+- All `// level_log()` calls
 
 **Impact:** Saves ~300-600 bytes
 
@@ -397,7 +397,7 @@ Add these to your project settings:
 
 | Optimization | Estimated Savings |
 |-------------|-------------------|
-| Remove snprintf | **8,000-12,000 bytes** |
+| Remove sn// printf | **8,000-12,000 bytes** |
 | Consolidate line drawing | 1,000-2,000 bytes |
 | Command constants → macros | 200-400 bytes |
 | Simplify variadic functions | 500-800 bytes |
@@ -413,7 +413,7 @@ This should give you **plenty** of space for sophisticated menu systems!
 
 ## Implementation Priority
 
-1. **Start with snprintf removal** - biggest impact
+1. **Start with sn// printf removal** - biggest impact
 2. **Delete all commented code** - easy cleanup
 3. **Consolidate line drawing** - good practice
 4. **Convert constants to macros** - simple search/replace

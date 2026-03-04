@@ -3,7 +3,7 @@
  * @brief Optimized utility functions for ILI9488 driver
  * 
  * This file contains replacement functions for heavy standard library
- * functions like snprintf to save flash space on PIC18.
+ * functions like sn// printf to save flash space on PIC18.
  */
 
 #ifndef ILI9488_UTILS_H
@@ -12,10 +12,10 @@
 #include <stdint.h>
 
 /**
- * @brief Convert int32_t to string without using snprintf
+ * @brief Convert int32_t to string without using sn// printf
  * 
- * This function replaces snprintf for integer conversion, saving
- * approximately 8-12KB of flash memory by avoiding the printf library.
+ * This function replaces sn// printf for integer conversion, saving
+ * approximately 8-12KB of flash memory by avoiding the // printf library.
  * 
  * @param num The 32-bit integer to convert
  * @param buf Buffer to store the string (must be at least 12 bytes for int32_t)
@@ -70,7 +70,7 @@ static inline uint8_t int32_to_str(int32_t num, char* buf, uint8_t bufsize) {
 }
 
 /**
- * @brief Convert uint32_t to string without using snprintf
+ * @brief Convert uint32_t to string without using sn// printf
  * 
  * Optimized version for unsigned integers (slightly faster, no sign handling)
  * 
