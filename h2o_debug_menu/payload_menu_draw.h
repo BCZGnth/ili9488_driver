@@ -11,6 +11,11 @@
 #include "xpt2046.h"
 #include "ili9488_base.h"
 
+typedef struct InteractiveButton {
+    TouchBox tb;
+    const char * label;
+} Button;
+
 /**
  * @brief Draw the main menu screen
  * 
@@ -121,16 +126,16 @@ enum AddMenuKeys {
 #define OPTION_TOTAL_HEIGHT OPTION_RECT_HEIGHT+OPTION_BOTTOM_PAD
 
 #define OPTION1_Y_START Y_START_HEADER
-#define OPTION2_Y_START Y_START_HEADER+OPTION_TOTAL_HEIGHT
-#define OPTION3_Y_START Y_START_HEADER+(2*OPTION_TOTAL_HEIGHT)
-#define OPTION4_Y_START Y_START_HEADER+(3*OPTION_TOTAL_HEIGHT)
-#define OPTION5_Y_START Y_START_HEADER+(4*OPTION_TOTAL_HEIGHT)
+#define OPTION2_Y_START Y_START_HEADER +      OPTION_TOTAL_HEIGHT
+#define OPTION3_Y_START Y_START_HEADER + (2 * OPTION_TOTAL_HEIGHT)
+#define OPTION4_Y_START Y_START_HEADER + (3 * OPTION_TOTAL_HEIGHT)
+#define OPTION5_Y_START Y_START_HEADER + (4 * OPTION_TOTAL_HEIGHT) + 25
 
-#define OPTION1_Y_END OPTION1_Y_START+OPTION_TOTAL_HEIGHT-1
-#define OPTION2_Y_END OPTION2_Y_START+OPTION_TOTAL_HEIGHT-1
-#define OPTION3_Y_END OPTION3_Y_START+OPTION_TOTAL_HEIGHT-1
-#define OPTION4_Y_END OPTION4_Y_START+OPTION_TOTAL_HEIGHT-1
-#define OPTION5_Y_END OPTION5_Y_START+OPTION_TOTAL_HEIGHT-1
+#define OPTION1_Y_END OPTION1_Y_START + OPTION_RECT_HEIGHT - 1
+#define OPTION2_Y_END OPTION2_Y_START + OPTION_RECT_HEIGHT - 1
+#define OPTION3_Y_END OPTION3_Y_START + OPTION_RECT_HEIGHT - 1
+#define OPTION4_Y_END OPTION4_Y_START + OPTION_RECT_HEIGHT - 1
+#define OPTION5_Y_END OPTION5_Y_START + OPTION_RECT_HEIGHT - 1
 
 
 // -----------------------------------------------------------------------------
@@ -149,47 +154,51 @@ enum AddMenuKeys {
  * | Whitelist | Send Payload | Exit  |
  * +----------------------------------+
  */
-static const TouchBox main_touch_boxes[] = {
-    /* Goto Payload Menu */
+static const Button main_menu_buttons[] = {
     {
-        .key = MAIN_BUTTON_SEND_PAYLOAD,
-        .xs = X_START_MARGIN,
-        .ys = OPTION1_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION1_Y_END
+        .label = "Send Payload", 
+        /* Goto Payload Menu */
+        .tb = {
+                  .key = MAIN_BUTTON_SEND_PAYLOAD,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION1_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION1_Y_END
+              },
     },
-    /* Goto WHITELIST menu */
     {
-        .key = MAIN_BUTTON_WHITELIST_MENU,
-        .xs = X_START_MARGIN,
-        .ys = OPTION2_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION2_Y_END,
+        .label = "Add to Whitelist", 
+        /* Goto WHITELIST menu */
+        .tb = {
+                  .key = MAIN_BUTTON_WHITELIST_MENU,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION2_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION2_Y_END,
+              },
     },
-    /* Goto WHITELIST menu */
     {
-        .key = MAIN_BUTTON_SETTINGS,
-        .xs = X_START_MARGIN,
-        .ys = OPTION3_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION3_Y_END,
+        .label = "Settings",
+        /* Goto WHITELIST menu */
+        .tb = {
+                  .key = MAIN_BUTTON_SETTINGS,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION3_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION3_Y_END,
+              },
     },
-    /* Exit */
     {
-        .key = MAIN_BUTTON_EXIT,
-        .xs = X_START_MARGIN,
-        .ys = OPTION5_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION5_Y_END,
+        .label = "Exit",
+        /* Exit */
+        .tb = {
+                  .key = MAIN_BUTTON_EXIT,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION5_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION5_Y_END,
+              },
     },
-};
-
-/* Draw the four main menu buttons */
-static const char* button_txt[] = {
-    "Send Payload", 
-    "Add to Whitelist", 
-    "Settings", 
-    "Exit"
 };
 
 
@@ -209,56 +218,62 @@ static const char* button_txt[] = {
  * |       Exit Button                |
  * +----------------------------------+
  */
-static const TouchBox payload_touch_boxes[] = {
+static const Button payload_touch_boxes[] = {
     /* Payload 1 Button */
     {
-        .key = PAYLOAD_BUTTON_1,
-        .xs = X_START_MARGIN,
-        .ys = OPTION1_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION1_Y_END
+        .label = "Payload 1",
+        .tb = {
+                  .key = PAYLOAD_BUTTON_1,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION1_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION1_Y_END
+              },
     },
     /* Payload 2 Button */
     {
-        .key = PAYLOAD_BUTTON_2,
-        .xs = X_START_MARGIN,
-        .ys = OPTION2_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION2_Y_END
+        .label = "Payload 2",
+        .tb = {
+                  .key = PAYLOAD_BUTTON_2,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION2_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION2_Y_END
+              },
     },
     /* Payload 3 Button */
     {
-        .key = PAYLOAD_BUTTON_3,
-        .xs = X_START_MARGIN,
-        .ys = OPTION3_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION3_Y_END
+        .label = "Payload 3",
+        .tb = {
+                  .key = PAYLOAD_BUTTON_3,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION3_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION3_Y_END
+              },        
     },
     /* Payload 4 Button */
     {
-        .key = PAYLOAD_BUTTON_4,
-        .xs = X_START_MARGIN,
-        .ys = OPTION4_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION4_Y_END
+        .label = "Payload 4",
+        .tb = {
+                  .key = PAYLOAD_BUTTON_4,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION4_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION4_Y_END
+              },
     },
-    /* Back Button */
     {
-        .key = PAYLOAD_BUTTON_EXIT,
-        .xs = X_START_MARGIN,
-        .ys = OPTION5_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION5_Y_END
+        .label = "Exit",
+        /* Exit */
+        .tb = {
+                  .key = PAYLOAD_BUTTON_EXIT,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION5_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION5_Y_END,
+              },
     },
-};
-
-/* Draw payload buttons */
-static const char* payload_labels[] = {
-    "Payload 1",
-    "Payload 2", 
-    "Payload 3",
-    "Payload 4",
-    "Exit"
 };
 
 
@@ -278,30 +293,39 @@ static const char* payload_labels[] = {
  * |       Exit Button                |
  * +----------------------------------+
  */
-static const TouchBox settings_touch_boxes[] = {
-    /* Goto Payload Menu */
+static const Button settings_touch_boxes[] = {
+    /* Set Frequency */
     {
-        .key = SETTINGS_BUTTON_FREQUENCY,
-        .xs = X_START_MARGIN,
-        .ys = OPTION1_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION1_Y_END
+        .label = "Set Frequency",
+        .tb = {
+                  .key = SETTINGS_BUTTON_FREQUENCY,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION1_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION1_Y_END
+              },
     },
-    /* Goto WHITELIST menu */
-    {
-        .key = SETTINGS_BUTTON_SCAN_INTERVAL,
-        .xs = X_START_MARGIN,
-        .ys = OPTION2_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION2_Y_END,
+    /* Set Scan */
+        {
+        .label = "Set Scan Interval",
+        .tb = {
+                  .key = SETTINGS_BUTTON_SCAN_INTERVAL,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION2_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION2_Y_END,
+              },
     },
-    /* Exit */
     {
-        .key = SETTINGS_BUTTON_SCAN_INTERVAL,
-        .xs = X_START_MARGIN,
-        .ys = OPTION5_Y_START,
-        .xe = X_END_MARGIN,
-        .ye = OPTION5_Y_END,
+        .label = "Exit",
+        /* Exit */
+        .tb = {
+                  .key = SETTINGS_BUTTON_EXIT,
+                  .xs = X_START_MARGIN,
+                  .ys = OPTION5_Y_START,
+                  .xe = X_END_MARGIN,
+                  .ye = OPTION5_Y_END,
+              },
     },
 };
 
@@ -319,129 +343,174 @@ static const TouchBox settings_touch_boxes[] = {
  * |   Delete  |    0    |   Add sn   |
  * +----------------------------------+
  */
-static const TouchBox add_touch_boxes[] = {
+static const Button add_touch_boxes[] = {
     /* #1 */
-    {
-        .key = ADD_BUTTON_ONE,
-        .xs = 9,
-        .ys = 69,
-        .xe = 110,
-        .ye = 170,
+        {
+        .label = "1",
+        .tb = {
+                  .key = ADD_BUTTON_ONE,
+                  .xs = 9,
+                  .ys = 69,
+                  .xe = 110,
+                  .ye = 170,
+              },
     },
     /* 2 */
-    {
-        .key = ADD_BUTTON_TWO,
-        .xs = 111,
-        .ys = 69,
-        .xe = 212,
-        .ye = 170,
+        {
+        .label = "2",
+        .tb = {
+                .key = ADD_BUTTON_TWO,
+                .xs = 111,
+                .ys = 69,
+                .xe = 212,
+                .ye = 170,
+            },
     },
     /* 3 */
-    {
-        .key = ADD_BUTTON_THREE,
-        .xs = 213,
-        .ys = 69,
-        .xe = 314,
-        .ye = 170,
+        {
+        .label = "3",
+        .tb = {
+                .key = ADD_BUTTON_THREE,
+                .xs = 213,
+                .ys = 69,
+                .xe = 314,
+                .ye = 170,
+            },
     },
     /* #4 */
-    {
-        .key = ADD_BUTTON_FOUR,
-        .xs = 9,
-        .ys = 171,
-        .xe = 110,
-        .ye = 272,
+        {
+        .label = "4",
+        .tb = {
+                  .key = ADD_BUTTON_FOUR,
+                  .xs = 9,
+                  .ys = 171,
+                  .xe = 110,
+                  .ye = 272,
+              },
     },
     /* 5 */
-    {
-        .key = ADD_BUTTON_FIVE,
-        .xs = 111,
-        .ys = 171,
-        .xe = 212,
-        .ye = 272,
+        {
+        .label = "5",
+        .tb = {
+                  .key = ADD_BUTTON_FIVE,
+                  .xs = 111,
+                  .ys = 171,
+                  .xe = 212,
+                  .ye = 272,
+              },
     },
     /* 6 */
-    {
-        .key = ADD_BUTTON_SIX,
-        .xs = 213,
-        .ys = 171,
-        .xe = 314,
-        .ye = 272,
+        {
+        .label = "6",
+        .tb = {
+                  .key = ADD_BUTTON_SIX,
+                  .xs = 213,
+                  .ys = 171,
+                  .xe = 314,
+                  .ye = 272,
+              },
     },
     /* #7 */
-    {
-        .key = ADD_BUTTON_SEVEN,
-        .xs = 9,
-        .ys = 273,
-        .xe = 110,
-        .ye = 374,
+        {
+        .label = "7",
+        .tb = {
+                  .key = ADD_BUTTON_SEVEN,
+                  .xs = 9,
+                  .ys = 273,
+                  .xe = 110,
+                  .ye = 374,
+              },
     },
     /* 8 */
-    {
-        .key = ADD_BUTTON_EIGHT,
-        .xs = 111,
-        .ys = 273,
-        .xe = 212,
-        .ye = 374,
+        {
+        .label = "8",
+        .tb = {
+                  .key = ADD_BUTTON_EIGHT,
+                  .xs = 111,
+                  .ys = 273,
+                  .xe = 212,
+                  .ye = 374,
+              },
     },
     /* 9 */
-    {
-        .key = ADD_BUTTON_NINE,
-        .xs = 213,
-        .ys = 273,
-        .xe = 314,
-        .ye = 374,
+        {
+        .label = "9",
+        .tb = {
+                  .key = ADD_BUTTON_NINE,
+                  .xs = 213,
+                  .ys = 273,
+                  .xe = 314,
+                  .ye = 374,
+              },
     },
     /* Delete */
-    {
-        .key = ADD_BUTTON_DELETE,
-        .xs = 9,
-        .ys = 375,
-        .xe = 110,
-        .ye = 476,
+        {
+        .label = "<",
+        .tb = {
+                  .key = ADD_BUTTON_DELETE,
+                  .xs = 9,
+                  .ys = 375,
+                  .xe = 110,
+                  .ye = 476,
+              },
     },
     /* 0 */
-    {
-        .key = ADD_BUTTON_ZERO,
-        .xs = 111,
-        .ys = 375,
-        .xe = 212,
-        .ye = 476,
+        {
+        .label = "0",
+        .tb = {
+                  .key = ADD_BUTTON_ZERO,
+                  .xs = 111,
+                  .ys = 375,
+                  .xe = 212,
+                  .ye = 476,
+              },
     },
     /* Add */
-    {
-        .key = ADD_BUTTON_ADD_SN,
-        .xs = 213,
-        .ys = 375,
-        .xe = 314,
-        .ye = 476,
+        {
+        .label = "Add",
+        .tb = {
+                  .key = ADD_BUTTON_ADD_SN,
+                  .xs = 213,
+                  .ys = 375,
+                  .xe = 314,
+                  .ye = 476,
+              },
     },
 };
 
-static const TouchBox whitelist_touch_boxes[] = {
+static const Button whitelist_touch_boxes[] = {
     /* Exit */
-    {
-        .key = WHITELIST_BUTTON_EXIT,
-        .xs = 7,
-        .ys = 367,
-        .xe = 108,
-        .ye = 469,
+        {
+        .label = "Exit",
+        .tb = {
+                  .key = WHITELIST_BUTTON_EXIT,
+                  .xs = 7,
+                  .ys = 367,
+                  .xe = 108,
+                  .ye = 469,
+              },
     },
     /* Clear SN List */
-    {
-        .key = WHITELIST_BUTTON_CLEAR,
-        .xs = 211,
-        .ys = 367,
-        .xe = 312,
-        .ye = 469,
+        {
+        .label = "Clear",
+        .tb = {
+                  .key = WHITELIST_BUTTON_CLEAR,
+                  .xs = 211,
+                  .ys = 367,
+                  .xe = 312,
+                  .ye = 469,
+              },
     },
     /* Add Serial Number */
-    {
-        .key = WHITELIST_BUTTON_ADD,
-        .xs = 109,
-        .ys = 367,
-        .xe = 210,
-        .ye = 469,
+        {
+        .label = "Add",
+        .tb = {
+                 .key = WHITELIST_BUTTON_ADD,
+                 .xs = 109,
+                 .ys = 367,
+                 .xe = 210,
+                 .ye = 469,
+             },
     },
 };
 
