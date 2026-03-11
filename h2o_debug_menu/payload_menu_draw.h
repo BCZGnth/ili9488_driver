@@ -184,6 +184,14 @@ static const TouchBox main_touch_boxes[] = {
     },
 };
 
+/* Draw the four main menu buttons */
+static const char* button_txt[] = {
+    "Send Payload", 
+    "Add to Whitelist", 
+    "Settings", 
+    "Exit"
+};
+
 
 /**
  * Send Payload Menu Touch Boxes
@@ -244,6 +252,16 @@ static const TouchBox payload_touch_boxes[] = {
     },
 };
 
+/* Draw payload buttons */
+static const char* payload_labels[] = {
+    "Payload 1",
+    "Payload 2", 
+    "Payload 3",
+    "Payload 4",
+    "Exit"
+};
+
+
 /**
  * Settings menu Touch Boxes
  * 
@@ -286,6 +304,8 @@ static const TouchBox settings_touch_boxes[] = {
         .ye = OPTION5_Y_END,
     },
 };
+
+
 
 /**
  * Send Payload Menu Touch Boxes

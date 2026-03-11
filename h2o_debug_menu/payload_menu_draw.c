@@ -10,6 +10,23 @@
 #include "../debug.h"
 #include <string.h>
 
+/**
+ * @param screen, a pointer to the screen structure
+ * @param buttons, a pointer to the touchbox array holding the box/key associations 
+ * @param labels, a pointer to the string array that holds labels for each button
+ */
+void draw_menu_items(Ili9488Defines* screen, TouchBox * buttons, const char ** labels, uint8_t count) {
+    /* Draw the Frame */
+    Ili9488Rect outline = {
+        .xstart = 0,
+        .ystart = 0,
+        .xend = screen->Screen.ScreenWidth - 1,
+        .yend = screen->Screen.ScreenHeight - 1,
+        .weight = 4,
+        .color = CYAN,
+    }; 
+}
+
 void draw_main_menu(Ili9488Defines* screen) {
     ili9488_cls(screen);
     
@@ -23,20 +40,17 @@ void draw_main_menu(Ili9488Defines* screen) {
         .color = CYAN,
     };
 
-    /* Horizontal line separating whitelist display from buttons */
-    Ili9488HVLine splitter = {
-        .xstart = 350,
-        .ystart = 4,
-        .weight = 4,
-        .length = screen->Screen.ScreenWidth - 9,
-        .color = CYAN,
-    };
+    // /* Horizontal line separating whitelist display from buttons */
+    // Ili9488HVLine splitter = {
+    //     .xstart = 350,
+    //     .ystart = 4,
+    //     .weight = 4,
+    //     .length = screen->Screen.ScreenWidth - 9,
+    //     .color = CYAN,
+    // };
 
     ili9488_draw_rect(screen, &outline);
-    ili9488_draw_hline(screen, &splitter);
 
-    /* Draw the four main menu buttons */
-    static const char* button_txt[] = {"Add to Whitelist", "Send Payload", "Settings", "Exit"};
     
     Ili9488Rect button_rect = {
         .color = MAGENTA,
@@ -79,14 +93,14 @@ void draw_main_menu(Ili9488Defines* screen) {
 
         /* Draw button text */
         button_label.text = (char*)button_txt[i];
-        // button_label.ram_ptr.start_x = text_x_center;
-        // button_label.ram_ptr.end_x   = main_touch_boxes[i].xe - TEXT_PAD;
-        // button_label.ram_ptr.start_y = text_y_center;
-        // button_label.ram_ptr.end_y   = text_y_center + (screen->Screen.offset_2x.height * 2);
-        button_label.ram_ptr.start_x = main_touch_boxes[i].xs;
-        button_label.ram_ptr.end_x   = main_touch_boxes[i].xe;
-        button_label.ram_ptr.start_y = main_touch_boxes[i].ys;
-        button_label.ram_ptr.end_y   = main_touch_boxes[i].ye;
+        button_label.ram_ptr.start_x = text_x_center;
+        button_label.ram_ptr.end_x   = text_x_center + text_length;
+        button_label.ram_ptr.start_y = text_y_center;
+        button_label.ram_ptr.end_y   = text_y_center + screen->Screen.offset_2x.height;
+        // button_label.ram_ptr.start_x = main_touch_boxes[i].xs;
+        // button_label.ram_ptr.end_x   = main_touch_boxes[i].xe;
+        // button_label.ram_ptr.start_y = main_touch_boxes[i].ys;
+        // button_label.ram_ptr.end_y   = main_touch_boxes[i].ye;
         
         ili9488_print(screen, &button_label);
     }
@@ -135,15 +149,6 @@ void draw_send_payload_menu(Ili9488Defines* screen) {
     };
     ili9488_print(screen, &title);
 
-    /* Draw payload buttons */
-    static const char* payload_labels[] = {
-        "Payload 1",
-        "Payload 2", 
-        "Payload 3",
-        "Payload 4",
-        "Exit"
-    };
-
     Ili9488Rect button_rect = {
         .color = MAGENTA,
         .weight = 3,
@@ -166,18 +171,18 @@ void draw_send_payload_menu(Ili9488Defines* screen) {
         uint8_t text_length = strlen(payload_labels[i]);
         uint16_t text_width = text_length * screen->Screen.offset_2x.width_pad;
         
-        uint16_t button_width = payload_touch_boxes[i].ye - payload_touch_boxes[i].ys;
-        uint16_t button_height = payload_touch_boxes[i].xe - payload_touch_boxes[i].xs;
-        
+        uint16_t button_width  = payload_touch_boxes[i].xe - payload_touch_boxes[i].xs;
+        uint16_t button_height = payload_touch_boxes[i].ye - payload_touch_boxes[i].ys;
+
         uint16_t text_x_center = payload_touch_boxes[i].xs + (button_width / 2) - (text_width / 2);
         uint16_t text_y_center = payload_touch_boxes[i].ys + (button_height / 2) - (screen->Screen.offset_2x.height / 2);
 
         /* Draw button text */
         button_label.text = (char*)payload_labels[i];
-        button_label.ram_ptr.start_x = main_touch_boxes[i].xs + TEXT_PAD;
-        button_label.ram_ptr.end_x   = main_touch_boxes[i].xe - TEXT_PAD;
+        button_label.ram_ptr.start_x = text_x_center;
+        button_label.ram_ptr.end_x   = text_x_center + text_width;
         button_label.ram_ptr.start_y = text_y_center;
-        button_label.ram_ptr.end_y   = text_y_center + text_width;
+        button_label.ram_ptr.end_y   = text_y_center + screen->Screen.offset_2x.height;
         
         ili9488_print(screen, &button_label);
     }
@@ -283,7 +288,9 @@ void debug_draw_add_menu(Ili9488Defines * screen) {
 
 void draw_whitelist_menu(Ili9488Defines * screen) {
     ili9488_cls(screen);
-    
+
+    #define WHITELIST_MENU_FONT screen->Screen.offset_2x
+
     /* Draw the Frame that will seperate the number pad from the text display */
     Ili9488Rect outline = {
         .xstart = 0,
@@ -312,7 +319,7 @@ void draw_whitelist_menu(Ili9488Defines * screen) {
     uint16_t num_y_start = circ_y_start - (screen->Screen.offset_2x.height / 2);
     uint16_t step = 102;
     static const char* button_txt[] = {"EXIT", "ADD", "CLEAR"};
-    // char num_to_print[2] = {*numbers, '\0'};
+
 
     Ili9488Circle circ = {
         .x = circ_x_start,
@@ -349,11 +356,8 @@ void draw_whitelist_menu(Ili9488Defines * screen) {
         text_length *= screen->Screen.offset_10x7.width_pad; 
 
         circ_txt.text = button_txt[column];
-        circ_txt.ram_ptr.start_x = circ_x_start - (text_length / 2) + (step * column);
-        circ_txt.ram_ptr.end_x = circ_y_start + (text_length / 2) + (step * column);
-        
-        // circ.x = circ_x_start + (step * column);
-        // ili9488_draw_circle(circ);
+        circ_txt.ram_ptr.start_x = whitelist_touch_boxes[column].xs - (text_length / 2) + (step * column);
+        circ_txt.ram_ptr.end_x = whitelist_touch_boxes[column].xs + (text_length / 2) + (step * column);
 
         rect.xstart = whitelist_touch_boxes[column].xs;
         rect.xend =   whitelist_touch_boxes[column].xe;
@@ -377,7 +381,7 @@ void draw_whitelist(SNWhitelist * pwlist, Ili9488Defines * pscreen, uint8_t clea
     if(clear_before) {
         Ili9488RamPointer black_line = {
             .start_x = 20,
-            .start_y = 20,
+            .start_y = WHITELIST_TEXT_Y_START,
             .end_x = pscreen->Screen.ScreenWidth - 20,
             .end_y = 20 + whitelist_font.height,
         };
@@ -388,7 +392,7 @@ void draw_whitelist(SNWhitelist * pwlist, Ili9488Defines * pscreen, uint8_t clea
             black_line.end_y += (whitelist_font.height + whitelist_line_spacing);
         }
     }
-    
+
     Ili9488WriteNumber sernum = {
         .clear_before = false,
         .fg = RED,
